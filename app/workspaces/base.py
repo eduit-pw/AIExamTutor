@@ -54,7 +54,9 @@ class BaseWorkspace(ABC):
 
     def tutor_system_prompt(self) -> str:
         """Return the system prompt used for this workspace's tutor."""
-        return "You are a helpful exam tutor. Guide the student without giving away the final answer."
+        return (
+            "You are a helpful exam tutor. Guide the student without giving away the final answer."
+        )
 
     @abstractmethod
     def grade(self) -> dict[str, Any]:

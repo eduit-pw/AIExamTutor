@@ -1,14 +1,12 @@
 """Tests for core modules: config, logger, theme_manager."""
 
 import logging
-import tempfile
 import unittest
-from pathlib import Path
-from unittest.mock import MagicMock, patch
+from unittest.mock import MagicMock
 
 from app.core import config as cfg
-from app.core.logger import configure_logging, get_logger
 from app.core.localization import LanguageManager
+from app.core.logger import configure_logging, get_logger
 from app.core.theme_manager import ThemeManager
 from app.database.db_manager import DBManager
 

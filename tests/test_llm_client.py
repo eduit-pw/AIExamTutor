@@ -4,18 +4,17 @@ Per ADR-005: built-in unittest, AAA pattern, Gherkin docstrings.
 Uses a stubbed http_poster to avoid network I/O.
 """
 
-import json
 import unittest
 from typing import Any
-from unittest.mock import MagicMock
 
-from app.core.llm_client import LLMClient, LLMError
 from app.core import config as cfg
+from app.core.llm_client import LLMClient, LLMError
 from app.database.db_manager import DBManager
 
 
 def _make_client(db: DBManager, stub_response: dict[str, Any]) -> LLMClient:
     """Create an LLMClient with a stubbed http_poster that returns `stub_response`."""
+
     def _stub_poster(url: str, headers: dict[str, str], body: dict[str, Any]) -> dict[str, Any]:
         # Verify auth header is passed for keyed providers
         if db.get_config(cfg.api_key_key("openai")):
@@ -38,7 +37,9 @@ class LLMClientOpenAICompatTests(unittest.TestCase):
         # --- ARRANGE ---
         seen: dict[str, Any] = {}
 
-        def _capture_poster(url: str, headers: dict[str, str], body: dict[str, Any]) -> dict[str, Any]:
+        def _capture_poster(
+            url: str, headers: dict[str, str], body: dict[str, Any]
+        ) -> dict[str, Any]:
             seen.update(url=url, headers=headers, body=body)
             return {"choices": [{"message": {"content": "OK"}}]}
 
@@ -84,9 +85,7 @@ class LLMClientOpenAICompatTests(unittest.TestCase):
         db.set_config(cfg.ACTIVE_PROVIDER, cfg.PROVIDER_OPENAI)
         db.set_config(cfg.model_key(cfg.PROVIDER_OPENAI), "gpt-4o-mini")
         db.set_config(cfg.api_key_key(cfg.PROVIDER_OPENAI), "sk-test")
-        stub = {
-            "choices": [{"message": {"content": "Hello back!"}}]
-        }
+        stub = {"choices": [{"message": {"content": "Hello back!"}}]}
         client = _make_client(db, stub)
         # --- ACT ---
         reply = client.chat([{"role": "user", "content": "hello"}])
@@ -107,12 +106,14 @@ class LLMClientOpenAICompatTests(unittest.TestCase):
         client = LLMClient(
             db,
             http_poster=lambda url, headers, body: {
-                "choices": [{
-                    "message": {
-                        "content": "",
-                        "reasoning_content": "Hello from local model",
+                "choices": [
+                    {
+                        "message": {
+                            "content": "",
+                            "reasoning_content": "Hello from local model",
+                        }
                     }
-                }]
+                ]
             },
         )
         # --- ACT ---
@@ -160,9 +161,13 @@ class LLMClientOpenAICompatTests(unittest.TestCase):
         """
         # --- ARRANGE ---
         seen_headers: dict[str, str] = {}
-        def _capture_poster(url: str, headers: dict[str, str], body: dict[str, Any]) -> dict[str, Any]:
+
+        def _capture_poster(
+            url: str, headers: dict[str, str], body: dict[str, Any]
+        ) -> dict[str, Any]:
             seen_headers.update(headers)
             return {"choices": [{"message": {"content": "ok"}}]}
+
         db = DBManager(":memory:")
         db.set_config(cfg.ACTIVE_PROVIDER, cfg.PROVIDER_OPENAI)
         db.set_config(cfg.api_key_key(cfg.PROVIDER_OPENAI), "sk-test")
@@ -181,9 +186,13 @@ class LLMClientOpenAICompatTests(unittest.TestCase):
         """
         # --- ARRANGE ---
         seen_body: dict[str, Any] = {}
-        def _capture_poster(url: str, headers: dict[str, str], body: dict[str, Any]) -> dict[str, Any]:
+
+        def _capture_poster(
+            url: str, headers: dict[str, str], body: dict[str, Any]
+        ) -> dict[str, Any]:
             seen_body.update(body)
             return {"choices": [{"message": {"content": "ok"}}]}
+
         db = DBManager(":memory:")
         db.set_config(cfg.ACTIVE_PROVIDER, cfg.PROVIDER_OPENAI)
         db.set_config(cfg.api_key_key(cfg.PROVIDER_OPENAI), "sk-test")
@@ -213,11 +222,7 @@ class LLMClientGeminiTests(unittest.TestCase):
         db.set_config(cfg.ACTIVE_PROVIDER, cfg.PROVIDER_GEMINI)
         db.set_config(cfg.model_key(cfg.PROVIDER_GEMINI), "gemini-1.5-flash")
         db.set_config(cfg.api_key_key(cfg.PROVIDER_GEMINI), "gemini-key")
-        stub = {
-            "candidates": [{
-                "content": {"parts": [{"text": "Gemini says hi"}]}
-            }]
-        }
+        stub = {"candidates": [{"content": {"parts": [{"text": "Gemini says hi"}]}}]}
         client = _make_client(db, stub)
         # --- ACT ---
         reply = client.chat([{"role": "user", "content": "hi"}])
@@ -233,10 +238,14 @@ class LLMClientGeminiTests(unittest.TestCase):
         """
         # --- ARRANGE ---
         seen_url: str = ""
-        def _capture_poster(url: str, headers: dict[str, str], body: dict[str, Any]) -> dict[str, Any]:
+
+        def _capture_poster(
+            url: str, headers: dict[str, str], body: dict[str, Any]
+        ) -> dict[str, Any]:
             nonlocal seen_url
             seen_url = url
             return {"candidates": [{"content": {"parts": [{"text": "ok"}]}}]}
+
         db = DBManager(":memory:")
         db.set_config(cfg.ACTIVE_PROVIDER, cfg.PROVIDER_GEMINI)
         db.set_config(cfg.model_key(cfg.PROVIDER_GEMINI), "gemini-1.5-flash")
@@ -256,19 +265,25 @@ class LLMClientGeminiTests(unittest.TestCase):
         """
         # --- ARRANGE ---
         seen_body: dict[str, Any] = {}
-        def _capture_poster(url: str, headers: dict[str, str], body: dict[str, Any]) -> dict[str, Any]:
+
+        def _capture_poster(
+            url: str, headers: dict[str, str], body: dict[str, Any]
+        ) -> dict[str, Any]:
             seen_body.update(body)
             return {"candidates": [{"content": {"parts": [{"text": "ok"}]}}]}
+
         db = DBManager(":memory:")
         db.set_config(cfg.ACTIVE_PROVIDER, cfg.PROVIDER_GEMINI)
         db.set_config(cfg.model_key(cfg.PROVIDER_GEMINI), "gemini-1.5-flash")
         db.set_config(cfg.api_key_key(cfg.PROVIDER_GEMINI), "k")
         client = LLMClient(db, http_poster=_capture_poster)
         # --- ACT ---
-        client.chat([
-            {"role": "system", "content": "You are a tutor."},
-            {"role": "user", "content": "Hello"},
-        ])
+        client.chat(
+            [
+                {"role": "system", "content": "You are a tutor."},
+                {"role": "user", "content": "Hello"},
+            ]
+        )
         # --- ASSERT ---
         contents = seen_body["contents"]
         first_user = next(c for c in contents if c["role"] == "user")

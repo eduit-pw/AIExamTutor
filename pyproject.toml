@@ -45,6 +45,8 @@ include = ["app*", "resources*", "prompts*"]
 [tool.ruff]
 line-length = 100
 target-version = "py312"
+
+[tool.ruff.lint]
 select = ["E", "F", "I", "UP", "B", "C4", "SIM", "T20"]
 ignore = ["S101", "S310"]  # assert in tests, urllib.urlopen for provider-config URLs
 

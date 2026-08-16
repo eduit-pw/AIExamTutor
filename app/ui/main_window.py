@@ -8,9 +8,7 @@ from __future__ import annotations
 
 import os
 from pathlib import Path
-from typing import Any
 
-from PySide6.QtCore import QUrl, Qt
 from PySide6.QtGui import QAction, QKeySequence
 from PySide6.QtUiTools import QUiLoader
 from PySide6.QtWidgets import (
@@ -26,12 +24,12 @@ from PySide6.QtWidgets import (
 
 from app.core import config as cfg
 from app.core.llm_client import LLMClient
-from app.core.logger import get_logger
 from app.core.localization import translate
+from app.core.logger import get_logger
 from app.core.theme_manager import ThemeManager
 from app.database.db_manager import DBManager
-from app.workspaces.factory import WorkspaceFactory, WorkspaceNotFoundError
 from app.workspaces.base import BaseWorkspace
+from app.workspaces.factory import WorkspaceFactory, WorkspaceNotFoundError
 
 logger = get_logger("ui.main_window")
 
@@ -130,7 +128,9 @@ class MainWindow(QMainWindow):
     def _set_status_indicator(self, key: str, ready: bool) -> None:
         indicator = self._status_indicators.get(key)
         if indicator is not None:
-            indicator.setText(f"{indicator.property('status_label') or key}: {'✅' if ready else '❌'}")
+            indicator.setText(
+                f"{indicator.property('status_label') or key}: {'✅' if ready else '❌'}"
+            )
             indicator.setProperty("ready", ready)
             style = indicator.style()
             style.unpolish(indicator)
@@ -203,9 +203,7 @@ class MainWindow(QMainWindow):
         answer_key = self._db.get_config(cfg.ANSWER_KEY_PDF)
         if answer_key and Path(answer_key).exists():
             self._answer_key_path = answer_key
-            self._mark_status_indicator(
-                "answer_key", translate("MainWindow", "Answer key")
-            )
+            self._mark_status_indicator("answer_key", translate("MainWindow", "Answer key"))
             self.statusBar().showMessage(
                 translate("MainWindow", "Answer key loaded: %1").replace(
                     "%1", Path(answer_key).name
@@ -273,9 +271,7 @@ class MainWindow(QMainWindow):
             self._attempt_id = self._db.create_attempt(workspace_id, self._pdf_path)
 
         try:
-            ws = WorkspaceFactory.create(
-                workspace_id, self._attempt_id, self._db, self._llm
-            )
+            ws = WorkspaceFactory.create(workspace_id, self._attempt_id, self._db, self._llm)
         except WorkspaceNotFoundError:
             QMessageBox.warning(
                 self,
@@ -335,9 +331,7 @@ class MainWindow(QMainWindow):
     def _on_llm_connection_succeeded(self, provider: str) -> None:
         self._mark_status_indicator("llm", translate("MainWindow", "LLM"))
         self.statusBar().showMessage(
-            translate("MainWindow", "LLM connection successful: %1").replace(
-                "%1", provider
-            )
+            translate("MainWindow", "LLM connection successful: %1").replace("%1", provider)
         )
 
     def _on_mysql_connection_succeeded(self, message: str) -> None:
@@ -354,7 +348,8 @@ class MainWindow(QMainWindow):
             self.statusBar().showMessage(
                 translate(
                     "MainWindow",
-                    "Vision disabled — STEM workspaces won't work. Configure a vision model in Settings.",
+                    "Vision disabled — STEM workspaces won't work. "
+                    "Configure a vision model in Settings.",
                 )
             )
         else:

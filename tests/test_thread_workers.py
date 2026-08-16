@@ -73,7 +73,9 @@ class WorkerThreadIsolationTests(unittest.TestCase):
         # --- ASSERT ---
         self.assertEqual(result, ["OK"])
         self.assertEqual(llm.calls[0][0], "test_connection")
-        self.assertEqual(llm.calls[0][1], ("lmstudio", "local-model", "", "http://localhost:1234/v1"))
+        self.assertEqual(
+            llm.calls[0][1], ("lmstudio", "local-model", "", "http://localhost:1234/v1")
+        )
 
     def test_grade_worker_uses_settings_snapshot(self) -> None:
         """

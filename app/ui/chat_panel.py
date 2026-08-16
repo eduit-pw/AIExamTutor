@@ -9,9 +9,8 @@ from __future__ import annotations
 
 import json
 from pathlib import Path
-from typing import Optional
 
-from PySide6.QtCore import QThread, Qt, Signal
+from PySide6.QtCore import Qt, QThread, Signal
 from PySide6.QtGui import QKeySequence, QShortcut
 from PySide6.QtWidgets import (
     QHBoxLayout,
@@ -25,8 +24,8 @@ from PySide6.QtWidgets import (
 
 from app.core import config as cfg
 from app.core.llm_client import LLMClient, LLMError
-from app.core.logger import get_logger
 from app.core.localization import translate
+from app.core.logger import get_logger
 from app.database.db_manager import DBManager
 from app.workspaces.base import BaseWorkspace
 
@@ -39,7 +38,13 @@ class _ChatWorker(QThread):
     finished_ok = Signal(str)
     finished_err = Signal(str)
 
-    def __init__(self, llm: LLMClient, settings: dict, messages: list[dict], images: list[bytes] | None = None) -> None:
+    def __init__(
+        self,
+        llm: LLMClient,
+        settings: dict,
+        messages: list[dict],
+        images: list[bytes] | None = None,
+    ) -> None:
         super().__init__()
         self._llm = llm
         self._settings = settings
@@ -66,11 +71,11 @@ class _ChatWorker(QThread):
 class ChatPanel(QWidget):
     """Scrollable chat history + input box + send button."""
 
-    def __init__(self, db: DBManager, llm: LLMClient, parent: Optional[QWidget] = None) -> None:
+    def __init__(self, db: DBManager, llm: LLMClient, parent: QWidget | None = None) -> None:
         super().__init__(parent)
         self._db = db
         self._llm = llm
-        self._active_attempt_id: Optional[int] = None
+        self._active_attempt_id: int | None = None
         self._active_workspace: BaseWorkspace | None = None
         self._pending_images: list[bytes] = []
 
@@ -227,9 +232,7 @@ class ChatPanel(QWidget):
         label.setTextFormat(Qt.TextFormat.RichText)
         self._history_layout.addWidget(label)
         # Auto-scroll to bottom
-        self._scroll.verticalScrollBar().setValue(
-            self._scroll.verticalScrollBar().maximum()
-        )
+        self._scroll.verticalScrollBar().setValue(self._scroll.verticalScrollBar().maximum())
 
     # ------------------------------------------------------------------
     # Context injection
@@ -252,9 +255,8 @@ class ChatPanel(QWidget):
             messages.append(
                 {
                     "role": "system",
-                    "content": "Current workspace context:\n" + json.dumps(
-                        context, ensure_ascii=False
-                    ),
+                    "content": "Current workspace context:\n"
+                    + json.dumps(context, ensure_ascii=False),
                 }
             )
         for row in history:

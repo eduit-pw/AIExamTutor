@@ -6,13 +6,10 @@ navigation, zoom, and region snipping (Ctrl+Shift+S) for Vision payloads.
 
 from __future__ import annotations
 
-import base64
-import io
 from pathlib import Path
-from typing import Optional
 
-from PySide6.QtCore import QBuffer, QByteArray, QRect, Qt, QTimer, Signal
-from PySide6.QtGui import QAction, QImage, QKeySequence, QPixmap, QShortcut
+from PySide6.QtCore import QBuffer, QRect, Qt, Signal
+from PySide6.QtGui import QImage, QKeySequence, QPixmap, QShortcut
 from PySide6.QtWidgets import (
     QComboBox,
     QHBoxLayout,
@@ -27,6 +24,7 @@ from app.core.localization import translate
 
 try:
     import fitz  # PyMuPDF
+
     FITZ_AVAILABLE = True
 except ImportError:
     FITZ_AVAILABLE = False
@@ -38,9 +36,9 @@ class PDFViewer(QWidget):
     # Emitted when user finishes a snip region (returns PNG bytes)
     region_snipped = Signal(bytes)
 
-    def __init__(self, parent: Optional[QWidget] = None) -> None:
+    def __init__(self, parent: QWidget | None = None) -> None:
         super().__init__(parent)
-        self._doc: Optional[fitz.Document] = None
+        self._doc: fitz.Document | None = None
         self._current_page = 0
         self._zoom_factor = 2.0  # 2.0 ≈ 300 DPI on typical 96 DPI screens
         self._snipping = False
@@ -134,9 +132,7 @@ class PDFViewer(QWidget):
         pix = page.get_pixmap(matrix=mat, alpha=False)
 
         # Convert to QImage → QPixmap
-        img = QImage(
-            pix.samples, pix.width, pix.height, pix.stride, QImage.Format.Format_RGB888
-        )
+        img = QImage(pix.samples, pix.width, pix.height, pix.stride, QImage.Format.Format_RGB888)
         self._pixmap = QPixmap.fromImage(img)
         self._image_label.setPixmap(self._pixmap)
         self._image_label.resize(self._pixmap.size())
@@ -194,7 +190,8 @@ class PDFViewer(QWidget):
             return
         # Create a copy with overlay
         overlay = self._pixmap.copy()
-        from PySide6.QtGui import QPainter, QColor, QPen
+        from PySide6.QtGui import QColor, QPainter, QPen
+
         painter = QPainter(overlay)
         painter.setPen(QPen(QColor(0, 120, 215), 2, Qt.PenStyle.DashLine))
         painter.setBrush(QColor(0, 120, 215, 50))

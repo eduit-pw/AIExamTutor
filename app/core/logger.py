@@ -37,9 +37,7 @@ def configure_logging(log_path: Path | None = None) -> None:
         datefmt="%Y-%m-%d %H:%M:%S",
     )
 
-    file_handler = RotatingFileHandler(
-        log_path, maxBytes=512_000, backupCount=3, encoding="utf-8"
-    )
+    file_handler = RotatingFileHandler(log_path, maxBytes=512_000, backupCount=3, encoding="utf-8")
     file_handler.setFormatter(formatter)
 
     stderr_handler = logging.StreamHandler(sys.stderr)

@@ -22,9 +22,7 @@ class HumanitiesWorkspace(BaseWorkspace):
         super().__init__(attempt_id, db, llm_client)
 
     def build_widget(self) -> QWidget:
-        raise NotImplementedError(
-            "HumanitiesWorkspace lands in v1.1. See spec §1.2 (subject #3)."
-        )
+        raise NotImplementedError("HumanitiesWorkspace lands in v1.1. See spec §1.2 (subject #3).")
 
     def build_context_payload(self) -> dict[str, Any]:
         raise NotImplementedError

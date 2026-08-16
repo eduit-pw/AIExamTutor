@@ -112,6 +112,7 @@ jobs:
             --add-data "prompts;prompts" ^
             --add-data "app/database/schema.sql;app/database" ^
             --add-data "app/ui/views;app/ui/views" ^
+            --add-data "translations;translations" ^
             --add-data "resources;resources" ^
             --collect-all PySide6 ^
             --collect-all mysql.connector ^

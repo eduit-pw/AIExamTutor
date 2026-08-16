@@ -35,9 +35,7 @@ class DBManagerConfigTests(unittest.TestCase):
             }
             # --- ASSERT ---
             self.assertTrue(database_path.is_file())
-            self.assertTrue(
-                {"app_config", "attempts", "messages", "drafts"}.issubset(tables)
-            )
+            self.assertTrue({"app_config", "attempts", "messages", "drafts"}.issubset(tables))
             db.close()
 
     def test_set_and_get_round_trip(self) -> None:
@@ -192,8 +190,7 @@ class DBManagerMessagesTests(unittest.TestCase):
         # --- ASSERT ---
         msgs = db.list_messages(attempt_id)
         self.assertEqual([m["role"] for m in msgs], ["user", "assistant", "user"])
-        self.assertEqual([m["content"] for m in msgs],
-                         ["Hello", "Hi there", "How are you?"])
+        self.assertEqual([m["content"] for m in msgs], ["Hello", "Hi there", "How are you?"])
 
     def test_add_message_rejects_invalid_role(self) -> None:
         """

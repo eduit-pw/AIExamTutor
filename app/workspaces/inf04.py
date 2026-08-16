@@ -22,9 +22,7 @@ class INF04Workspace(BaseWorkspace):
         super().__init__(attempt_id, db, llm_client)
 
     def build_widget(self) -> QWidget:
-        raise NotImplementedError(
-            "INF04Workspace lands in v1.1. See spec §1.2 (subject #7)."
-        )
+        raise NotImplementedError("INF04Workspace lands in v1.1. See spec §1.2 (subject #7).")
 
     def build_context_payload(self) -> dict[str, Any]:
         raise NotImplementedError

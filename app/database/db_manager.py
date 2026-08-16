@@ -70,9 +70,7 @@ class DBManager:
     # ------------------------------------------------------------------
     def get_config(self, key: str, default: str | None = None) -> str | None:
         """Return the value for `key`, or `default` if absent."""
-        row = self._conn.execute(
-            "SELECT value FROM app_config WHERE key = ?", (key,)
-        ).fetchone()
+        row = self._conn.execute("SELECT value FROM app_config WHERE key = ?", (key,)).fetchone()
         return row["value"] if row is not None else default
 
     def set_config(self, key: str, value: str) -> None:
@@ -118,9 +116,7 @@ class DBManager:
 
     def get_attempt(self, attempt_id: int) -> dict[str, Any] | None:
         """Return one attempt as a dict, or None if not found."""
-        row = self._conn.execute(
-            "SELECT * FROM attempts WHERE id = ?", (attempt_id,)
-        ).fetchone()
+        row = self._conn.execute("SELECT * FROM attempts WHERE id = ?", (attempt_id,)).fetchone()
         return dict(row) if row is not None else None
 
     def list_attempts(self, subject: str | None = None) -> list[dict[str, Any]]:

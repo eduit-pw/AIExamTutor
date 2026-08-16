@@ -13,8 +13,8 @@ from importlib import resources
 from PySide6.QtGui import QIcon
 from PySide6.QtWidgets import QApplication
 
-from app.core.logger import configure_logging, get_logger
 from app.core.localization import LanguageManager
+from app.core.logger import configure_logging, get_logger
 from app.core.theme_manager import ThemeManager
 from app.database.db_manager import DBManager
 from app.ui.main_window import MainWindow
@@ -33,9 +33,7 @@ def main() -> int:
     app = QApplication(sys.argv)
     app.setApplicationName("AI Exam Tutor")
     app.setOrganizationName("EDUIT")
-    with resources.as_file(
-        resources.files("resources").joinpath("eduit-favicon.ico")
-    ) as icon_path:
+    with resources.as_file(resources.files("resources").joinpath("eduit-favicon.ico")) as icon_path:
         app.setWindowIcon(QIcon(str(icon_path)))
 
     db = DBManager("exam_tutor.db")

@@ -26,9 +26,7 @@ class _WorkspaceRegistry(dict[str, type[BaseWorkspace]]):
         super().__init__()
         self._builtins: dict[str, type[BaseWorkspace]] = {}
 
-    def remember_builtin(
-        self, workspace_id: str, workspace_cls: type[BaseWorkspace]
-    ) -> None:
+    def remember_builtin(self, workspace_id: str, workspace_cls: type[BaseWorkspace]) -> None:
         self._builtins[workspace_id] = workspace_cls
 
     def clear(self) -> None:
@@ -77,9 +75,7 @@ class WorkspaceFactory:
         """Instantiate the workspace class registered under `workspace_id`."""
         workspace_cls = cls._registry.get(workspace_id)
         if workspace_cls is None:
-            raise WorkspaceNotFoundError(
-                f"No workspace registered under id {workspace_id!r}"
-            )
+            raise WorkspaceNotFoundError(f"No workspace registered under id {workspace_id!r}")
         return workspace_cls(attempt_id, db, llm_client)
 
     @classmethod

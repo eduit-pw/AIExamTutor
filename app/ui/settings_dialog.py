@@ -6,13 +6,21 @@ from importlib import resources
 
 from PySide6.QtCore import QThread, Signal
 from PySide6.QtUiTools import QUiLoader
-from PySide6.QtWidgets import QLabel, QComboBox, QDialog, QDialogButtonBox, QLineEdit, QMessageBox, QPushButton, QVBoxLayout
+from PySide6.QtWidgets import (
+    QComboBox,
+    QDialog,
+    QDialogButtonBox,
+    QLabel,
+    QLineEdit,
+    QMessageBox,
+    QPushButton,
+    QVBoxLayout,
+)
 
 from app.core import config as cfg
 from app.core.llm_client import LLMClient
 from app.core.localization import LANGUAGE_OPTIONS, translate
 from app.database.db_manager import DBManager
-
 
 PROVIDERS: tuple[tuple[str, str], ...] = (
     (cfg.PROVIDER_OPENAI, "OpenAI"),
@@ -43,7 +51,9 @@ class _ConnectionTestWorker(QThread):
     succeeded = Signal(str)
     failed = Signal(str)
 
-    def __init__(self, llm: LLMClient, provider: str, model: str, api_key: str, base_url: str) -> None:
+    def __init__(
+        self, llm: LLMClient, provider: str, model: str, api_key: str, base_url: str
+    ) -> None:
         super().__init__()
         self._llm = llm
         self._provider = provider
@@ -83,7 +93,9 @@ class SettingsDialog(QDialog):
 
     def _load_ui(self) -> None:
         loader = QUiLoader()
-        with resources.as_file(resources.files("app.ui.views").joinpath("SettingsDialog.ui")) as path:
+        with resources.as_file(
+            resources.files("app.ui.views").joinpath("SettingsDialog.ui")
+        ) as path:
             widget = loader.load(str(path), self)
         if widget is None:
             raise RuntimeError("QUiLoader returned None for SettingsDialog.ui")
@@ -131,9 +143,7 @@ class SettingsDialog(QDialog):
             save_button.setText(translate("SettingsDialog", "Save"))
         if cancel_button is not None:
             cancel_button.setText(translate("SettingsDialog", "Cancel"))
-        self._test_connection_button.setText(
-            translate("SettingsDialog", "Test connection")
-        )
+        self._test_connection_button.setText(translate("SettingsDialog", "Test connection"))
 
     def _load_values(self) -> None:
         self._provider_combo.clear()
@@ -161,7 +171,10 @@ class SettingsDialog(QDialog):
             self._model_combo.setCurrentText(saved_model)
         self._api_key.setText(self._db.get_config(cfg.api_key_key(provider), "") or "")
         self._base_url.setText(
-            self._db.get_config(cfg.base_url_key(provider), LLMClient.DEFAULT_BASE_URLS.get(provider, "")) or ""
+            self._db.get_config(
+                cfg.base_url_key(provider), LLMClient.DEFAULT_BASE_URLS.get(provider, "")
+            )
+            or ""
         )
 
     def _save(self) -> None:

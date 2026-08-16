@@ -94,10 +94,7 @@ class LLMClient:
         separately by the caller based on current workspace state.
         """
         rows = self._db.list_messages(attempt_id)
-        return [
-            {"role": row["role"], "content": row["content"]}
-            for row in rows
-        ]
+        return [{"role": row["role"], "content": row["content"]} for row in rows]
 
     # ------------------------------------------------------------------
     # Public chat entry point
@@ -174,9 +171,7 @@ class LLMClient:
     ) -> str:
         """Send a minimal request using explicit settings, without DB access."""
         messages = [{"role": "user", "content": "Reply with exactly: OK"}]
-        return self.chat_with_settings(
-            provider, model, api_key, base_url, messages, None
-        )
+        return self.chat_with_settings(provider, model, api_key, base_url, messages, None)
 
     def _chat_openai_compatible(
         self,
@@ -292,12 +287,7 @@ class LLMClient:
                         if url.startswith("data:image/"):
                             header, b64 = url.split(",", 1)
                             mime_type = header.split(";")[0].split(":")[1]
-                            parts.append({
-                                "inlineData": {
-                                    "mimeType": mime_type,
-                                    "data": b64
-                                }
-                            })
+                            parts.append({"inlineData": {"mimeType": mime_type, "data": b64}})
                 if parts:
                     gemini_role = "user" if role == "user" else "model"
                     contents.append({"role": gemini_role, "parts": parts})
@@ -321,9 +311,9 @@ class LLMClient:
                 if contents[idx].get("role") == "user":
                     for image_bytes in images:
                         b64 = base64.b64encode(image_bytes).decode("ascii")
-                        contents[idx]["parts"].append({
-                            "inlineData": {"mimeType": "image/png", "data": b64}
-                        })
+                        contents[idx]["parts"].append(
+                            {"inlineData": {"mimeType": "image/png", "data": b64}}
+                        )
                     break
 
         return contents

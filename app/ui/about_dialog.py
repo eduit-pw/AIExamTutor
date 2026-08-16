@@ -2,8 +2,8 @@
 
 from __future__ import annotations
 
-from io import BytesIO
 from importlib import resources
+from io import BytesIO
 
 import qrcode
 from PySide6.QtCore import Qt
@@ -16,6 +16,7 @@ from PySide6.QtWidgets import (
     QTextBrowser,
     QVBoxLayout,
 )
+
 from app.core.localization import LANGUAGE_ENGLISH, translate
 
 SUPPORT_URL = "https://eduit.net.pl/"
@@ -119,9 +120,7 @@ class AboutDialog(QDialog):
 
     def _load_ui(self) -> None:
         loader = QUiLoader()
-        with resources.as_file(
-            resources.files("app.ui.views").joinpath("AboutDialog.ui")
-        ) as path:
+        with resources.as_file(resources.files("app.ui.views").joinpath("AboutDialog.ui")) as path:
             widget = loader.load(str(path), self)
         if widget is None:
             raise RuntimeError("QUiLoader returned None for AboutDialog.ui")
@@ -146,13 +145,12 @@ class AboutDialog(QDialog):
         if close_button is not None:
             close_button.setText(translate("AboutDialog", "Close"))
         if title_label is not None:
-            title_label.setText(
-                translate("AboutDialog", "<b>AI Exam Tutor</b><br/>Version 1.0.0")
-            )
+            title_label.setText(translate("AboutDialog", "<b>AI Exam Tutor</b><br/>Version 1.0.0"))
         support_label.setText(
             translate(
                 "AboutDialog",
-                "<b>Support the project</b><br/>If the app helps you learn, you can support its development.",
+                "<b>Support the project</b><br/>"
+                "If the app helps you learn, you can support its development.",
             )
         )
         support_link_label.setText(f'<a href="{SUPPORT_URL}">{SUPPORT_URL}</a>')
@@ -172,7 +170,9 @@ class AboutDialog(QDialog):
         manual_browser.setHtml(
             MANUAL_HTML_BY_LANGUAGE.get(self._language, MANUAL_HTML_BY_LANGUAGE["pl"]).get(
                 self._workspace_id,
-                MANUAL_HTML_BY_LANGUAGE[self._language if self._language in MANUAL_HTML_BY_LANGUAGE else "pl"]["default"],
+                MANUAL_HTML_BY_LANGUAGE[
+                    self._language if self._language in MANUAL_HTML_BY_LANGUAGE else "pl"
+                ]["default"],
             )
         )
 

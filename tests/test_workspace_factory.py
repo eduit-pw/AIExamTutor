@@ -3,15 +3,10 @@
 import unittest
 from unittest.mock import Mock, patch
 
+from app.core.llm_client import LLMClient
+from app.database.db_manager import DBManager
 from app.workspaces.factory import WorkspaceFactory, WorkspaceNotFoundError
 from app.workspaces.inf03 import INF03Workspace
-from app.workspaces.foreign_language import ForeignLanguageWorkspace
-from app.workspaces.humanities import HumanitiesWorkspace
-from app.workspaces.stem import STEMWorkspace
-from app.workspaces.science import ScienceWorkspace
-from app.workspaces.inf04 import INF04Workspace
-from app.database.db_manager import DBManager
-from app.core.llm_client import LLMClient
 
 
 class WorkspaceFactoryTests(unittest.TestCase):
@@ -21,7 +16,14 @@ class WorkspaceFactoryTests(unittest.TestCase):
         # Reset registry before each test
         WorkspaceFactory._registry.clear()
         # Re-import to re-register
-        from app.workspaces import inf03, foreign_language, humanities, stem, science, inf04  # noqa: F401
+        from app.workspaces import (  # noqa: F401
+            foreign_language,
+            humanities,
+            inf03,
+            inf04,
+            science,
+            stem,
+        )
 
     def tearDown(self) -> None:
         WorkspaceFactory.reset()
@@ -214,8 +216,9 @@ class INF03WorkspaceTests(unittest.TestCase):
             '"criteria": [], "missing_requirements": [], "summary": "Dobrze"}'
         )
         ws = INF03Workspace(self.attempt_id, self.db, self.llm)
-        with patch.object(self.llm, "chat", return_value=response) as chat, patch.object(
-            INF03Workspace, "_extract_pdf_text", return_value="answer key"
+        with (
+            patch.object(self.llm, "chat", return_value=response) as chat,
+            patch.object(INF03Workspace, "_extract_pdf_text", return_value="answer key"),
         ):
             # --- ACT ---
             result = ws.grade()

@@ -6,8 +6,8 @@ the scaffold imports and DBManager on :memory:.
 
 import unittest
 
-from app.database.db_manager import DBManager
 from app.core.config import is_vision_capable
+from app.database.db_manager import DBManager
 from app.workspaces.factory import WorkspaceFactory
 from app.workspaces.inf03 import INF03Workspace
 

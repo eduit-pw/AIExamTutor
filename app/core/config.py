@@ -8,8 +8,9 @@ constant from here, never inline the string literal.
 from __future__ import annotations
 
 # --- Active provider routing ---
-ACTIVE_PROVIDER = "active_provider"        # e.g. "openai", "gemini", "ollama"
-ACTIVE_MODEL = "active_model"              # e.g. "gpt-4o", "llama3.2-vision"
+ACTIVE_PROVIDER = "active_provider"  # e.g. "openai", "gemini", "ollama"
+ACTIVE_MODEL = "active_model"  # e.g. "gpt-4o", "llama3.2-vision"
+
 
 # --- Per-provider credentials (suffix is the provider id) ---
 def api_key_key(provider_id: str) -> str:
@@ -28,17 +29,18 @@ def model_key(provider_id: str) -> str:
 
 
 # --- UI / UX preferences ---
-THEME = "theme"                            # "light" | "dark"
-LANGUAGE = "language"                      # "pl" | "en", Polish by default
-LAST_PDF = "last_pdf"                      # absolute path of last opened CKE PDF
-ANSWER_KEY_PDF = "answer_key_pdf"          # absolute path of the answer key for AI context
-ACTIVE_WORKSPACE = "active_workspace"      # e.g. "inf03" — drives WorkspaceFactory
-MYSQL_CONNECTION = "mysql_connection"      # MySQL URL used by the INF.03 SQL runner
+THEME = "theme"  # "light" | "dark"
+LANGUAGE = "language"  # "pl" | "en", Polish by default
+LAST_PDF = "last_pdf"  # absolute path of last opened CKE PDF
+ANSWER_KEY_PDF = "answer_key_pdf"  # absolute path of the answer key for AI context
+ACTIVE_WORKSPACE = "active_workspace"  # e.g. "inf03" — drives WorkspaceFactory
+MYSQL_CONNECTION = "mysql_connection"  # MySQL URL used by the INF.03 SQL runner
 
 
 def code_file_key(attempt_id: int, file_name: str) -> str:
     """Return the persisted path key for a workspace code file."""
     return f"code_file_{attempt_id}_{file_name}"
+
 
 # --- Provider identifiers (canonical lowercase ids) ---
 PROVIDER_OPENAI = "openai"

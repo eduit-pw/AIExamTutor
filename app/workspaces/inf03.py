@@ -16,37 +16,36 @@ Register with WorkspaceFactory at import time.
 from __future__ import annotations
 
 import json
-import time
 import tempfile
+import time
 from pathlib import Path
 from typing import Any
 from urllib.parse import unquote, urlsplit
 
-from PySide6.QtCore import QTimer, QUrl, Qt
+from PySide6.QtCore import Qt, QTimer, QUrl
 from PySide6.QtGui import QDesktopServices, QKeySequence, QShortcut
 from PySide6.QtUiTools import QUiLoader
 from PySide6.QtWidgets import (
     QComboBox,
+    QFileDialog,
     QHBoxLayout,
     QHeaderView,
     QLabel,
     QLineEdit,
-    QFileDialog,
     QMessageBox,
     QPlainTextEdit,
     QPushButton,
     QSplitter,
-    QTabWidget,
     QTableView,
-    QTextEdit,
+    QTabWidget,
     QVBoxLayout,
     QWidget,
 )
 
 from app.core import config as cfg
 from app.core.llm_client import LLMClient, LLMError
-from app.core.logger import get_logger
 from app.core.localization import translate
+from app.core.logger import get_logger
 from app.database.db_manager import DBManager
 from app.workspaces.base import BaseWorkspace
 from app.workspaces.factory import WorkspaceFactory
@@ -152,6 +151,7 @@ class INF03Workspace(BaseWorkspace):
     def _load_from_ui(self) -> QWidget:
         loader = QUiLoader()
         from importlib import resources
+
         with resources.as_file(
             resources.files("app.ui.views.workspaces").joinpath("INF03Workspace.ui")
         ) as ui_path:
@@ -188,7 +188,9 @@ class INF03Workspace(BaseWorkspace):
 
         connection_row = QHBoxLayout()
         connection_row.addWidget(QLabel(translate("INF03Workspace", "Connection")))
-        self._connection_input = QLineEdit(self.db.get_config(cfg.MYSQL_CONNECTION, DEFAULT_CONNECTION_STRING))
+        self._connection_input = QLineEdit(
+            self.db.get_config(cfg.MYSQL_CONNECTION, DEFAULT_CONNECTION_STRING)
+        )
         self._connection_input.setObjectName("connectionStringLineEdit")
         self._connection_input.setPlaceholderText("mysql://user:password@host:3306/database")
         connection_row.addWidget(self._connection_input, 1)
@@ -216,9 +218,7 @@ class INF03Workspace(BaseWorkspace):
         self._results_view = QTableView()
         self._results_view.setObjectName("resultsTable")
         self._results_view.setAlternatingRowColors(True)
-        self._results_view.horizontalHeader().setSectionResizeMode(
-            QHeaderView.ResizeMode.Stretch
-        )
+        self._results_view.horizontalHeader().setSectionResizeMode(QHeaderView.ResizeMode.Stretch)
         sql_splitter.addWidget(self._results_view)
         main_splitter.addWidget(sql_splitter)
 
@@ -467,7 +467,11 @@ class INF03Workspace(BaseWorkspace):
     def _connection_parameters(self, schema: str | None = None) -> dict[str, Any]:
         """Parse the user-facing MySQL URL into mysql-connector arguments."""
         value = (self._connection_input.text() if self._connection_input else "").strip()
-        value = value or self.db.get_config(cfg.MYSQL_CONNECTION, DEFAULT_CONNECTION_STRING) or DEFAULT_CONNECTION_STRING
+        value = (
+            value
+            or self.db.get_config(cfg.MYSQL_CONNECTION, DEFAULT_CONNECTION_STRING)
+            or DEFAULT_CONNECTION_STRING
+        )
         parsed = urlsplit(value if "://" in value else f"mysql://{value}")
         database = parsed.path.lstrip("/") or None
         return {
@@ -555,7 +559,9 @@ class INF03Workspace(BaseWorkspace):
             (folder / "style.css").write_text(css, encoding="utf-8")
         QDesktopServices.openUrl(QUrl.fromLocalFile(str(target)))
         self._set_status(
-            translate("INF03Workspace", "Opened %1 in the default browser.").replace("%1", file_name)
+            translate("INF03Workspace", "Opened %1 in the default browser.").replace(
+                "%1", file_name
+            )
         )
 
     def _save_current_file(self) -> None:
@@ -570,7 +576,9 @@ class INF03Workspace(BaseWorkspace):
         editor, file_name, file_filter = files[self._code_tabs.currentIndex()]
         if editor is None:
             return
-        saved_path = self.db.get_config(cfg.code_file_key(self.attempt_id, file_name), "") or file_name
+        saved_path = (
+            self.db.get_config(cfg.code_file_key(self.attempt_id, file_name), "") or file_name
+        )
         path, _ = QFileDialog.getSaveFileName(
             self._root,
             f"Save {file_name}",
@@ -581,9 +589,7 @@ class INF03Workspace(BaseWorkspace):
             return
         Path(path).write_text(editor.toPlainText(), encoding="utf-8")
         self.db.set_config(cfg.code_file_key(self.attempt_id, file_name), path)
-        self._set_status(
-            translate("INF03Workspace", "Saved %1.").replace("%1", Path(path).name)
-        )
+        self._set_status(translate("INF03Workspace", "Saved %1.").replace("%1", Path(path).name))
 
     def _set_status(self, text: str) -> None:
         if self._status is not None:
@@ -609,9 +615,7 @@ class INF03Workspace(BaseWorkspace):
         if self._check_button is not None:
             self._check_button.setEnabled(False)
             self._check_button.setText(translate("INF03Workspace", "Checking..."))
-        self._set_status(
-            translate("INF03Workspace", "Checking solution against the answer key...")
-        )
+        self._set_status(translate("INF03Workspace", "Checking solution against the answer key..."))
         self._grade_worker.start()
 
     def _on_grade_succeeded(self, response: str) -> None:
@@ -640,9 +644,7 @@ class INF03Workspace(BaseWorkspace):
     def _on_grade_failed(self, error: str) -> None:
         if not self._active:
             return
-        self._set_status(
-            translate("INF03Workspace", "Evaluation failed: %1").replace("%1", error)
-        )
+        self._set_status(translate("INF03Workspace", "Evaluation failed: %1").replace("%1", error))
 
     def _on_grade_finished(self) -> None:
         self._grade_worker = None
