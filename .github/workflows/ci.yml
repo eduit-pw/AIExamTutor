@@ -32,7 +32,7 @@ jobs:
         run: |
           python -m pip install --upgrade pip
           pip install -r requirements.txt
-          pip install ruff mutmut
+          pip install ruff "mutmut==2.5.0"
 
       - name: Lint with Ruff
         run: |
@@ -66,15 +66,15 @@ jobs:
         run: |
           python -m pip install --upgrade pip
           pip install -r requirements.txt
-          pip install mutmut
+          pip install "mutmut==2.5.0"
 
       - name: Run mutmut on db_manager
         run: |
-          mutmut run --paths-to-mutate app/database/db_manager.py --runner "python -m unittest discover -v" --timeout-factor 3
+          mutmut run --paths-to-mutate app/database/db_manager.py --runner "python -m unittest discover -v" --test-time-multiplier 3
 
       - name: Run mutmut on llm_client
         run: |
-          mutmut run --paths-to-mutate app/core/llm_client.py --runner "python -m unittest discover -v" --timeout-factor 3
+          mutmut run --paths-to-mutate app/core/llm_client.py --runner "python -m unittest discover -v" --test-time-multiplier 3
 
       - name: Mutation results
         run: |

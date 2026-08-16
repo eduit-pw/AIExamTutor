@@ -49,11 +49,3 @@ target-version = "py312"
 [tool.ruff.lint]
 select = ["E", "F", "I", "UP", "B", "C4", "SIM", "T20"]
 ignore = ["S101", "S310"]  # assert in tests, urllib.urlopen for provider-config URLs
-
-[tool.mutmut]
-paths-to-mutate = [
-  "app/database/db_manager.py",
-  "app/core/llm_client.py",
-]
-runner = "python -m unittest discover -v"
-timeout-factor = 3
