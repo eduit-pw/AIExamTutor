@@ -71,9 +71,10 @@ jobs:
           pip install pyinstaller
 
       - name: Install Inno Setup
-        uses: minhong/setup-inno-setup@v2
-        with:
-          version: 6.2.2
+        shell: pwsh
+        run: |
+          choco install innosetup --yes --no-progress
+          "C:\Program Files (x86)\Inno Setup 6" | Out-File -FilePath $env:GITHUB_PATH -Encoding utf8 -Append
 
       - name: Build with PyInstaller
         run: |
