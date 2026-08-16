@@ -69,8 +69,6 @@ python -m unittest discover -v
 # Lint
 ruff check .
 
-# Mutation (on db_manager + llm_client only per spec §8)
-mutmut run --paths-to-mutate app/database/db_manager.py,app/core/llm_client.py
 ```
 
 ## Build Installer (Windows)

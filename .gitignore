@@ -43,8 +43,6 @@ app.log
 # Test / coverage artifacts
 .coverage
 htmlcov/
-.mutmut-cache/
-.mutmut-result-cache/
 
 # Temporary files
 *.tmp

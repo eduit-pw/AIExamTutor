@@ -10,7 +10,6 @@ Design notes:
   * `is_vision_capable()` reads the registry from `app.core.config` so the
     MainWindow banner can warn when the active model lacks vision.
 
-This module is one of the two mutation-test targets (per spec §8).
 """
 
 from __future__ import annotations
