@@ -1,0 +1,22 @@
+# AI Exam Tutor — runtime dependencies
+# Keep pinned to known-good versions for reproducible builds
+
+# GUI framework (LGPLv3 — dynamically linked per ADR-001)
+# PySide6 6.11.x supports Python 3.14; 6.7.x only up to 3.13
+PySide6==6.11.1
+
+# QR code for the optional project-support link
+qrcode==8.2
+Pillow==11.3.0
+
+# Database
+mysql-connector-python==8.2.0
+
+# PDF rendering. PyMuPDF is installed separately from the application
+# installer because its AGPL license has packaging implications (ADR-001).
+pymupdf==1.26.4
+
+# Optional: for development only
+# pytest==8.2.0
+# ruff==0.5.0
+# mutmut==2.5.0

@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ui version="4.0">
+ <class>SettingsDialog</class>
+ <widget class="QWidget" name="settingsRoot">
+     <property name="windowTitle"><string>AI Tutor Settings</string></property>
+     <layout class="QFormLayout" name="formLayout">
+      <item row="0" column="0"><widget class="QLabel" name="providerLabel"><property name="text"><string>Provider</string></property></widget></item>
+      <item row="0" column="1"><widget class="QComboBox" name="providerComboBox"/></item>
+      <item row="1" column="0"><widget class="QLabel" name="modelLabel"><property name="text"><string>Model</string></property></widget></item>
+      <item row="1" column="1"><widget class="QComboBox" name="modelComboBox"><property name="editable"><bool>true</bool></property></widget></item>
+      <item row="2" column="0"><widget class="QLabel" name="apiKeyLabel"><property name="text"><string>API key</string></property></widget></item>
+      <item row="2" column="1"><widget class="QLineEdit" name="apiKeyLineEdit"><property name="echoMode"><enum>QLineEdit::Password</enum></property></widget></item>
+      <item row="3" column="0"><widget class="QLabel" name="baseUrlLabel"><property name="text"><string>Base URL</string></property></widget></item>
+      <item row="3" column="1"><widget class="QLineEdit" name="baseUrlLineEdit"/></item>
+    <item row="4" column="0"><widget class="QLabel" name="languageLabel"><property name="text"><string>Language</string></property></widget></item>
+    <item row="4" column="1"><widget class="QComboBox" name="languageComboBox"/></item>
+    <item row="5" column="0" colspan="2"><widget class="QPushButton" name="testConnectionButton"><property name="text"><string>Test connection</string></property></widget></item>
+    <item row="6" column="0" colspan="2"><widget class="QDialogButtonBox" name="buttonBox"><property name="standardButtons"><set>QDialogButtonBox::Cancel|QDialogButtonBox::Save</set></property></widget></item>
+     </layout>
+ </widget>
+ <resources/>
+ <connections/>
+</ui>

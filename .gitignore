@@ -1,0 +1,88 @@
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Distribution / packaging
+build/
+dist/
+*.egg-info/
+Output_Installer/
+
+# Virtual environments
+.venv/
+venv/
+env/
+ENV/
+
+# IDE / editor
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS-specific
+.DS_Store
+Thumbs.db
+
+# Application data (runtime)
+*.db
+*.db-journal
+*.log
+app.log
+%LOCALAPPDATA%/AIExamTutor/
+
+# PyInstaller artifacts
+*.spec
+
+# Inno Setup artifacts
+*.iss~tmp
+*.iss~tmp~
+
+# Test / coverage artifacts
+.coverage
+htmlcov/
+.mutmut-cache/
+.mutmut-result-cache/
+
+# Temporary files
+*.tmp
+*.temp
+
+# Local config (not committed)
+local_config.json
+*.local.yml
+*.local.yaml
+
+# Private development and agent instructions
+claude.md
+spec.md
+.claude/
+
+# Prompts are part of the public application behavior and remain tracked.
+
+# Environment files (secrets)
+.env
+.env.local
+.env.*.local
+
+# Large assets not tracked
+resources/exam_sheets/*.pdf
+!resources/exam_sheets/LICENSE_NOTICE.md
+
+# Qt Designer backup files
+*.ui~
+*.ui.bak
+
+# MySQL connector cache
+mysql_connector_cache/
+
+# Ruff cache
+.ruff_cache/
+
+# pytest cache (even though we use unittest)
+.pytest_cache/
+
+# Sphinx docs
+docs/_build/

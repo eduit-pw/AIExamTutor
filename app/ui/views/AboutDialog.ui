@@ -1,0 +1,66 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ui version="4.0">
+ <class>AboutDialog</class>
+ <widget class="QWidget" name="aboutRoot">
+  <property name="windowTitle"><string>O aplikacji</string></property>
+  <layout class="QVBoxLayout" name="verticalLayout">
+   <item>
+    <widget class="QLabel" name="titleLabel">
+    <property name="text"><string>&lt;b&gt;AI Exam Tutor&lt;/b&gt;&lt;br/&gt;Wersja 1.0.0</string></property>
+    </widget>
+   </item>
+    <item>
+     <widget class="QLabel" name="supportLabel">
+      <property name="text"><string>&lt;b&gt;Wesprzyj projekt&lt;/b&gt;&lt;br/&gt;Jeśli aplikacja pomaga Ci w nauce, możesz wesprzeć jej rozwój.</string></property>
+      <property name="wordWrap"><bool>true</bool></property>
+     </widget>
+    </item>
+    <item>
+     <widget class="QLabel" name="qrCodeLabel">
+      <property name="minimumSize"><size><width>220</width><height>220</height></size></property>
+      <property name="alignment"><set>Qt::AlignCenter</set></property>
+     </widget>
+    </item>
+    <item>
+     <widget class="QLabel" name="supportLinkLabel">
+      <property name="text"><string>&lt;a href="https://eduit.net.pl/"&gt;https://eduit.net.pl/&lt;/a&gt;</string></property>
+      <property name="openExternalLinks"><bool>true</bool></property>
+      <property name="alignment"><set>Qt::AlignCenter</set></property>
+     </widget>
+    </item>
+   <item>
+    <widget class="QTextBrowser" name="manualBrowser">
+     <property name="openExternalLinks"><bool>true</bool></property>
+     <property name="html">
+      <string>
+       &lt;h2&gt;Skrócona instrukcja ucznia&lt;/h2&gt;
+       &lt;h3&gt;Zanim zaczniesz&lt;/h3&gt;
+       &lt;p&gt;Przygotuj arkusz INF.03 w PDF oraz, jeśli chcesz korzystać z oceniania, osobny klucz odpowiedzi. Do pracy z SQL potrzebujesz uruchomionego MySQL, na przykład przez XAMPP. Do rozmowy z tutorem skonfiguruj dostawcę AI lokalnego lub chmurowego.&lt;/p&gt;
+       &lt;h3&gt;Pierwsze uruchomienie&lt;/h3&gt;
+       &lt;ol&gt;
+        &lt;li&gt;Otwórz &lt;b&gt;Plik -&gt; Ustawienia&lt;/b&gt; i wybierz dostawcę, model oraz język.&lt;/li&gt;
+        &lt;li&gt;Otwórz arkusz przez &lt;b&gt;Plik -&gt; Otwórz PDF&lt;/b&gt;.&lt;/li&gt;
+        &lt;li&gt;Opcjonalnie otwórz klucz odpowiedzi przez &lt;b&gt;Plik -&gt; Otwórz klucz odpowiedzi PDF&lt;/b&gt;.&lt;/li&gt;
+        &lt;li&gt;Wyślij tutorowi krótkie pytanie testowe.&lt;/li&gt;
+       &lt;/ol&gt;
+       &lt;h3&gt;Praca z PDF i tutorem&lt;/h3&gt;
+       &lt;p&gt;Lewy panel pokazuje arkusz. Możesz zmieniać stronę i powiększenie. Użyj &lt;b&gt;Snip Region&lt;/b&gt;, aby wysłać tutorowi fragment strony. Tutor działa sokratejsko: pomaga rozumować i sprawdzać wymagania, zamiast automatycznie podawać całe rozwiązanie.&lt;/p&gt;
+       &lt;h3&gt;Workspace INF.03&lt;/h3&gt;
+       &lt;p&gt;W środkowym panelu znajdziesz SQL, wynik zapytania oraz zakładki &lt;b&gt;index.php&lt;/b&gt;, &lt;b&gt;index.html&lt;/b&gt; i &lt;b&gt;style.css&lt;/b&gt;. Szkice są automatycznie zapisywane. &lt;b&gt;Save current file&lt;/b&gt; zapisuje plik w wybranym folderze, a &lt;b&gt;Run in browser&lt;/b&gt; pokazuje podgląd HTML/CSS. Do zapytań użyj &lt;b&gt;Run SQL&lt;/b&gt; lub skrótu &lt;b&gt;Ctrl+Enter&lt;/b&gt;.&lt;/p&gt;
+       &lt;h3&gt;Bezpieczeństwo i koszty&lt;/h3&gt;
+       &lt;p&gt;Klucz API zapisuj tylko w ustawieniach aplikacji. Nie wysyłaj go tutorowi ani nie publikuj na zrzutach ekranu. Dostawcy chmurowi mogą naliczać opłaty za zapytania i obrazy; przed użyciem sprawdź limity oraz cennik.&lt;/p&gt;
+       &lt;p&gt;Pełna dokumentacja znajduje się w pliku &lt;b&gt;docs/manual-ucznia.md&lt;/b&gt; w repozytorium projektu.&lt;/p&gt;
+      </string>
+     </property>
+    </widget>
+   </item>
+   <item>
+    <widget class="QDialogButtonBox" name="buttonBox">
+     <property name="standardButtons"><set>QDialogButtonBox::Close</set></property>
+    </widget>
+   </item>
+  </layout>
+ </widget>
+ <resources/>
+ <connections/>
+</ui>

@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- PdfViewerPane.ui — PLACEHOLDER.
+     Real layout to be authored in Qt Designer. -->
+<ui version="4.0">
+ <class>PdfViewerPane</class>
+ <widget class="QWidget" name="PdfViewerPane">
+  <property name="objectName">
+   <string>PdfViewerPane</string>
+  </property>
+  <widget class="QLabel" name="pdfPlaceholder">
+   <property name="objectName">
+    <string>pdfPlaceholder</string>
+   </property>
+   <property name="text">
+    <string>Open a CKE exam PDF (Ctrl+O)</string>
+   </property>
+  </widget>
+ </widget>
+ <resources/>
+ <connections/>
+</ui>

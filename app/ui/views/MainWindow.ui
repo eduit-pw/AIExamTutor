@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  MainWindow.ui — PLACEHOLDER.
+  Author the real layout in Qt Designer (see app/ui/views/README.md).
+  Object names below are what MainWindow.py will look up at runtime.
+-->
+<ui version="4.0">
+ <class>MainWindow</class>
+ <widget class="QMainWindow" name="MainWindow">
+  <property name="objectName">
+   <string>MainWindow</string>
+  </property>
+  <property name="windowTitle">
+   <string>AI Exam Tutor</string>
+  </property>
+  <widget class="QWidget" name="centralwidget">
+   <property name="objectName">
+    <string>centralwidget</string>
+   </property>
+  <layout class="QVBoxLayout" name="centralLayout">
+   <item>
+    <widget class="QSplitter" name="mainSplitter">
+    <property name="orientation"><enum>Qt::Horizontal</enum></property>
+    <widget class="QWidget" name="leftPane"/>
+    <widget class="QStackedWidget" name="centerStack"/>
+    <widget class="QWidget" name="rightPane"/>
+    </widget>
+   </item>
+  </layout>
+  </widget>
+  <widget class="QStatusBar" name="statusbar"/>
+  <widget class="QMenuBar" name="menubar"/>
+ </widget>
+ <resources/>
+ <connections/>
+</ui>

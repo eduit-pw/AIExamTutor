@@ -1,0 +1,33 @@
+# Ruff configuration — strict, opinionated, PEP 8 aligned.
+# Docs: https://docs.astral.sh/ruff/
+
+line-length = 100
+target-version = "py312"
+extend-exclude = ["build", "dist", ".venv", "Output_Installer"]
+
+[lint]
+# KISS-first: enable only the rule families that catch real bugs.
+select = [
+    "E",   # pycodestyle errors
+    "W",   # pycodestyle warnings
+    "F",   # pyflakes
+    "I",   # isort (import order)
+    "B",   # flake8-bugbear
+    "UP",  # pyupgrade (modern syntax)
+    "SIM", # flake8-simplify
+    "RUF", # ruff-specific
+    "N",   # pep8-naming
+    "TCH", # flake8-type-checking
+]
+ignore = [
+    "E501",  # line length handled by formatter
+    "B008",  # function-call-in-default-argument (used for Qt signal patterns)
+]
+
+[lint.per-file-ignores]
+"tests/**" = ["N802"]   # unittest method names like `test_set_and_get` are fine
+
+[format]
+quote-style = "double"
+indent-style = "space"
+line-ending = "lf"

@@ -1,0 +1,60 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ui version="4.0">
+ <class>INF03Workspace</class>
+ <widget class="QWidget" name="INF03Workspace">
+  <property name="objectName"><string>INF03Root</string></property>
+  <layout class="QVBoxLayout" name="outerLayout">
+   <item>
+    <layout class="QHBoxLayout" name="toolbarLayout">
+     <item><widget class="QLabel" name="schemaLabel"><property name="text"><string>Schema</string></property></widget></item>
+     <item><widget class="QComboBox" name="schemaComboBox"/></item>
+     <item><widget class="QPushButton" name="runSqlButton"><property name="text"><string>Run SQL</string></property></widget></item>
+    </layout>
+   </item>
+    <item>
+     <layout class="QHBoxLayout" name="connectionLayout">
+      <item><widget class="QLabel" name="connectionLabel"><property name="text"><string>Connection</string></property></widget></item>
+      <item><widget class="QLineEdit" name="connectionStringLineEdit"><property name="placeholderText"><string>mysql://user:password@host:3306/database</string></property></widget></item>
+      <item><widget class="QPushButton" name="saveConnectionButton"><property name="text"><string>Save</string></property></widget></item>
+      <item><widget class="QPushButton" name="testConnectionButton"><property name="text"><string>Test</string></property></widget></item>
+     </layout>
+    </item>
+    <item>
+     <widget class="QSplitter" name="mainWorkspaceSplitter">
+      <property name="orientation"><enum>Qt::Vertical</enum></property>
+      <widget class="QSplitter" name="sqlSplitter">
+        <property name="orientation"><enum>Qt::Vertical</enum></property>
+        <widget class="QPlainTextEdit" name="sqlEditor"><property name="placeholderText"><string>SELECT * FROM ...</string></property></widget>
+        <widget class="QTableView" name="resultsTable"/>
+      </widget>
+      <widget class="QGroupBox" name="codePanel">
+        <property name="title"><string>PHP / HTML</string></property>
+        <layout class="QVBoxLayout" name="codePanelLayout">
+        <item>
+         <widget class="QTabWidget" name="codeTabs">
+          <widget class="QPlainTextEdit" name="phpEditor">
+           <property name="placeholderText"><string>&lt;?php</string></property>
+           <attribute name="title"><string>index.php</string></attribute>
+          </widget>
+          <widget class="QPlainTextEdit" name="htmlEditor">
+           <property name="placeholderText"><string>&lt;!DOCTYPE html&gt;</string></property>
+           <attribute name="title"><string>index.html</string></attribute>
+          </widget>
+          <widget class="QPlainTextEdit" name="cssEditor">
+           <property name="placeholderText"><string>body { ... }</string></property>
+           <attribute name="title"><string>style.css</string></attribute>
+          </widget>
+         </widget>
+        </item>
+        <item><widget class="QPushButton" name="saveCodeButton"><property name="text"><string>Save current file</string></property></widget></item>
+        <item><widget class="QPushButton" name="checkTaskButton"><property name="text"><string>Check task</string></property></widget></item>
+        </layout>
+      </widget>
+     </widget>
+    </item>
+   <item><widget class="QPushButton" name="runBrowserButton"><property name="text"><string>Run in browser</string></property></widget></item>
+   <item><widget class="QLabel" name="statusLabel"><property name="text"><string>Ready.</string></property></widget></item>
+  </layout>
+ </widget>
+ <resources/><connections/>
+</ui>

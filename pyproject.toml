@@ -1,0 +1,57 @@
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "ai-exam-tutor"
+version = "1.0.0"
+description = "Desktop AI tutor for Polish Matura/INF exams (BYOK, Socratic, offline-first)"
+readme = "README.md"
+requires-python = ">=3.12"
+license = {text = "Proprietary"}
+authors = [
+  {name = "Pawel", email = "pawel@example.com"}
+]
+classifiers = [
+  "Development Status :: 3 - Alpha",
+  "Environment :: Win32 (MS Windows)",
+  "License :: Other/Proprietary License",
+  "Operating System :: Microsoft :: Windows",
+  "Programming Language :: Python :: 3.12",
+  "Topic :: Education",
+]
+dependencies = [
+  "PySide6==6.11.1",
+  "mysql-connector-python==8.2.0",
+  "pymupdf==1.26.4",
+]
+
+[project.optional-dependencies]
+dev = [
+  "ruff==0.5.0",
+  "mutmut==2.5.0",
+  "pytest==8.2.0",
+]
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["app*", "resources*", "prompts*"]
+
+[tool.setuptools.package-data]
+"app" = ["ui/views/**/*.ui", "database/schema.sql"]
+"resources" = ["exam_sheets/*.pdf", "exam_sheets/LICENSE_NOTICE.md"]
+"prompts" = ["*.txt"]
+
+[tool.ruff]
+line-length = 100
+target-version = "py312"
+select = ["E", "F", "I", "UP", "B", "C4", "SIM", "T20"]
+ignore = ["S101", "S310"]  # assert in tests, urllib.urlopen for provider-config URLs
+
+[tool.mutmut]
+paths-to-mutate = [
+  "app/database/db_manager.py",
+  "app/core/llm_client.py",
+]
+runner = "python -m unittest discover -v"
+timeout-factor = 3
