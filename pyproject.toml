@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "ai-exam-tutor"
-version = "1.1.0"
+version = "1.2.0"
 description = "Desktop AI tutor for Polish Matura/INF exams (BYOK, Socratic, offline-first)"
 readme = "README.md"
 requires-python = ">=3.12"
@@ -26,6 +26,7 @@ dependencies = [
   "Pillow==12.3.0",
   "mysql-connector-python==9.1.0",
   "pymupdf==1.26.4",
+  "rocher==0.55.1",
 ]
 
 [project.optional-dependencies]

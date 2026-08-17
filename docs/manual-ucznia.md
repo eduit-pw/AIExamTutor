@@ -1,7 +1,7 @@
 # AI Exam Tutor - manual ucznia
 
-**Wersja manuala:** 1.1<br>
-**Dotyczy aplikacji:** AI Exam Tutor 1.1.0<br>
+**Wersja manuala:** 1.2<br>
+**Dotyczy aplikacji:** AI Exam Tutor 1.2.0<br>
 **Platforma:** Windows
 
 Ten manual opisuje korzystanie z gotowej wersji aplikacji dla ucznia przygotowującego się do egzaminu INF.03. Aplikacja pozwala otworzyć arkusz PDF, pracować nad SQL oraz kodem PHP/HTML, zadawać pytania tutorowi AI i sprawdzić rozwiązanie.
@@ -71,7 +71,7 @@ Po wybraniu INF.03 wykonaj te czynności w kolejności:
 3. Skonfiguruj dostawcę AI według rozdziału 4.
 4. Otwórz arkusz przez `Plik -> Otwórz PDF` albo skrót `Ctrl+O`.
 5. Jeżeli chcesz oceniać zadanie, otwórz również `Plik -> Otwórz PDF z kluczem odpowiedzi`.
-6. W środkowym panelu pozostaw lub wybierz środowisko `INF.03 - SQL i PHP/HTML`.
+6. W środkowym panelu pozostaw lub wybierz środowisko `INF.03 - SQL i PHP/HTML/CSS/JavaScript`.
 7. Wyślij krótkie pytanie testowe do AI Asystenta, na przykład: `Jakie wymagania powinienem sprawdzić w tym zadaniu?`.
 
 Aplikacja zapamiętuje wybrane ustawienia oraz ostatnio używane pliki. Przy
@@ -179,7 +179,7 @@ Sam arkusz egzaminacyjny i klucz odpowiedzi to dwa różne pliki. Załadowanie t
 Aby wysłać tutorowi fragment arkusza:
 
 1. Otwórz właściwą stronę PDF.
-2. Kliknij `Zaznacz fragment (Ctrl+Shift+S)` albo naciśnij `Ctrl+Shift+S`.
+2. Kliknij ikonę `Zaznacz fragment` albo naciśnij `Ctrl+Shift+S`.
 3. Przeciągnij myszą po interesującym fragmencie.
 4. Puść przycisk myszy.
 5. Napisz pytanie w panelu AI Tutor i kliknij `Wyślij`.
@@ -204,6 +204,12 @@ Ustawienia połączenia z bazą są domyślnie zwinięte. Rozwiń `Ustawienia
 połączenia z bazą`, aby użyć pól `Zapisz` i `Testuj`. Główna akcja `Sprawdź
 zadanie` jest wyróżniona, a zapis pliku i uruchomienie podglądu pozostają
 akcjami pomocniczymi.
+
+Zakładki kodu PHP, HTML, CSS i JavaScript korzystają z lokalnego edytora
+Monaco. Edytor nie pobiera plików z internetu, zachowuje bieżący motyw jasny
+lub ciemny aplikacji i automatycznie zapisuje szkice tak jak wcześniejszy
+edytor. W środowisku bez Qt WebEngine aplikacja używa prostszego edytora tekstu
+z tym samym zapisem, podglądem i wysyłaniem kontekstu do AI.
 
 ### 6.2 XAMPP i MySQL
 
@@ -258,9 +264,9 @@ Pracuj w odpowiedniej zakładce:
 
 Szkice są automatycznie zapisywane po krótkiej przerwie w pisaniu. Dzięki temu treść może zostać odtworzona po ponownym wejściu do tej samej próby.
 
-`Save file` zapisuje aktualnie wybraną zakładkę jako plik na dysku. Karta `Database (SQL)` nie jest plikiem źródłowym i nie może zostać zapisana tą akcją. Jest to osobna czynność od automatycznego zapisu szkicu w bazie aplikacji. Wybierz tę opcję, gdy chcesz zachować plik w konkretnym folderze albo użyć go poza aplikacją.
+`Zapisz plik` zapisuje aktualnie wybraną zakładkę jako plik na dysku. Karta `Baza danych (SQL)` nie jest plikiem źródłowym i nie może zostać zapisana tą akcją. Jest to osobna czynność od automatycznego zapisu szkicu w bazie aplikacji. Wybierz tę opcję, gdy chcesz zachować plik w konkretnym folderze albo użyć go poza aplikacją.
 
-`Preview` zapisuje aktualną treść do katalogu tymczasowego i otwiera plik w domyślnej przeglądarce. Jest to szybki podgląd pliku. Nie zastępuje pełnego serwera PHP i nie uruchamia automatycznie interpretera PHP.
+`Podgląd` zapisuje aktualną treść do katalogu tymczasowego i otwiera plik w domyślnej przeglądarce. Jest to szybki podgląd pliku. Nie zastępuje pełnego serwera PHP i nie uruchamia automatycznie interpretera PHP.
 
 ## 7. Rozmowa z AI Tutor
 
@@ -270,8 +276,8 @@ masz problem. Asystent ma pomagać w rozumowaniu, a nie od razu podawać komplet
 
 Aby zadać pytanie:
 
-1. Wpisz pytanie w polu `Ask the AI Assistant...`.
-2. Kliknij `Send (Ctrl+Enter)` albo naciśnij `Ctrl+Enter`.
+1. Wpisz pytanie w polu `Zadaj pytanie AI Asystentowi...`.
+2. Kliknij `Wyślij (Ctrl+Enter)` albo naciśnij `Ctrl+Enter`.
 3. Poczekaj na odpowiedź.
 
 Do wiadomości tutora może zostać automatycznie dołączony bieżący kontekst środowiska pracy, w tym:

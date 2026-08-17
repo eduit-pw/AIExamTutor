@@ -29,6 +29,7 @@ from app.core.localization import translate
 from app.core.logger import get_logger
 from app.core.theme_manager import ThemeManager
 from app.database.db_manager import DBManager
+from app.ui.monaco_editor import MonacoEditor
 from app.ui.startup_screen import StartupScreen
 from app.workspaces.base import BaseWorkspace
 from app.workspaces.factory import WorkspaceFactory
@@ -96,7 +97,7 @@ class MainWindow(QMainWindow):
         self._main_splitter.setStretchFactor(1, 2)
         self._main_splitter.setStretchFactor(2, 1)
         self._main_splitter.setChildrenCollapsible(False)
-        self._left_pane.setMinimumWidth(250)
+        self._left_pane.setMinimumWidth(300)
         self._center_stack.setMinimumWidth(400)
         self._right_pane.setMinimumWidth(300)
         self._splitter_timer = QTimer(self._main_splitter)
@@ -114,7 +115,7 @@ class MainWindow(QMainWindow):
         total_width = self._main_splitter.width()
         if total_width <= 0:
             return
-        left_width = max(250, int(total_width * 0.25))
+        left_width = max(300, int(total_width * 0.27))
         right_width = max(300, int(total_width * 0.28))
         center_width = max(400, total_width - left_width - right_width)
         self._main_splitter.setSizes([left_width, center_width, right_width])
@@ -457,7 +458,9 @@ class MainWindow(QMainWindow):
 
     def _toggle_theme(self) -> None:
         """Flip Light/Dark and reapply."""
-        self._theme.toggle(QApplication.instance())
+        new_theme = self._theme.toggle(QApplication.instance())
+        for editor in self.findChildren(MonacoEditor):
+            editor.set_theme(new_theme)
 
     def _update_vision_banner(self) -> None:
         """Show/hide the vision-warning banner based on active model."""

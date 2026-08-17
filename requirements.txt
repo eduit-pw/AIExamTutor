@@ -16,4 +16,7 @@ mysql-connector-python==9.1.0
 # installer because its AGPL license has packaging implications (ADR-001).
 pymupdf==1.26.4
 
+# Local Monaco Editor bundle for the INF.03 code workspace
+rocher==0.55.1
+
 # Optional: development tooling is listed in requirements-dev.txt.

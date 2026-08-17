@@ -43,7 +43,10 @@ limitations, and the downloadable artifacts.
 ## INF.03 workflow
 
 The reference workspace supports two PDF inputs: the exam sheet and a separate
-answer key. The SQL runner and PHP/HTML tabs are included in the grading payload.
+answer key. The SQL runner and PHP/HTML/CSS/JavaScript tabs are included in the
+grading payload. PHP, HTML, CSS and JavaScript use a locally bundled Monaco
+Editor through Rocher; when Qt WebEngine is unavailable, the application keeps
+the same text API through a plain-text fallback.
 `Check task` sends that payload to the configured BYOK model using the dedicated
 `prompts/inf03_grader.txt` system prompt. The evaluator must return JSON with
 points, rubric feedback, missing requirements, and a summary. The validated
@@ -89,6 +92,7 @@ pyinstaller --noconfirm --onedir --windowed \
   --add-data "translations;translations" \
   --add-data "resources;resources" \
   --collect-all PySide6 \
+  --collect-all rocher \
   --collect-all mysql.connector \
   --name "AI_Exam_Tutor" \
   main.py
@@ -97,7 +101,9 @@ iscc setup_script.iss
 # Output: Output_Installer/AI_Exam_Tutor_Setup.exe
 ```
 
-GitHub Actions does this automatically on `git tag vX.Y.Z` (see `.github/workflows/build-installer.yml`).
+GitHub Actions does this automatically on `git tag vX.Y.Z` (see
+`.github/workflows/ci.yml`). The build collects Rocher's local `vs` assets so
+the installer can run Monaco without downloading editor files.
 
 ## Contributing (high-school friendly)
 

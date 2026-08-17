@@ -18,6 +18,7 @@ from PySide6.QtWidgets import (
     QPlainTextEdit,
     QPushButton,
     QScrollArea,
+    QSizePolicy,
     QVBoxLayout,
     QWidget,
 )
@@ -90,6 +91,7 @@ class ChatPanel(QWidget):
         header = QLabel(translate("ChatPanel", "AI Assistant"))
         header.setStyleSheet("font-weight: bold; padding: 4px;")
         layout.addWidget(header)
+        layout.addSpacing(8)
 
         # Chat history (scrollable)
         self._scroll = QScrollArea()
@@ -127,9 +129,9 @@ class ChatPanel(QWidget):
         input_layout.addWidget(self._input, 1)
 
         button_row = QHBoxLayout()
-        button_row.addStretch()
         self._send_btn = QPushButton(translate("ChatPanel", "Send (Ctrl+Enter)"))
-        self._send_btn.setMinimumWidth(126)
+        self._send_btn.setMinimumHeight(34)
+        self._send_btn.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Fixed)
         self._send_btn.clicked.connect(self._send)
         button_row.addWidget(self._send_btn)
         input_layout.addLayout(button_row)

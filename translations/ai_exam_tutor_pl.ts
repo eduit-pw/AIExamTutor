@@ -79,7 +79,7 @@
     <message><source>About AI Exam Tutor</source><translation>O aplikacji AI Exam Tutor</translation></message>
     <message><source>Close</source><translation>Zamknij</translation></message>
     <message><source>&lt;b&gt;Support the project&lt;/b&gt;&lt;br/&gt;If the app helps you learn, you can support its development.</source><translation>&lt;b&gt;Wesprzyj projekt&lt;/b&gt;&lt;br/&gt;Jeśli aplikacja pomaga Ci w nauce, możesz wesprzeć jej rozwój.</translation></message>
-    <message><source>&lt;b&gt;AI Exam Tutor&lt;/b&gt;&lt;br/&gt;Version 1.1.0</source><translation>&lt;b&gt;AI Exam Tutor&lt;/b&gt;&lt;br/&gt;Wersja 1.1.0</translation></message>
+    <message><source>&lt;b&gt;AI Exam Tutor&lt;/b&gt;&lt;br/&gt;Version 1.2.0</source><translation>&lt;b&gt;AI Exam Tutor&lt;/b&gt;&lt;br/&gt;Wersja 1.2.0</translation></message>
 </context>
 <context>
     <name>SettingsDialog</name>
@@ -180,7 +180,7 @@
     <name>PDFViewer</name>
     <message><source>Page:</source><translation>Strona:</translation></message>
     <message><source>Snip</source><translation>Fragment</translation></message>
-    <message><source>📄\nChoose an exam sheet from the menu or drag a PDF file here</source><translation>📄\nWybierz arkusz z menu lub przeciągnij tutaj plik PDF</translation></message>
+    <message><source>Choose an exam sheet from the menu or drag a PDF file here</source><translation>Wybierz arkusz z menu lub przeciągnij tutaj plik PDF</translation></message>
     <message><source>Zoom:</source><translation>Powiększenie:</translation></message>
     <message><source>Snip Region (Ctrl+Shift+S)</source><translation>Zaznacz fragment (Ctrl+Shift+S)</translation></message>
     <message><source>No PDF loaded</source><translation>Nie wczytano PDF-a</translation></message>

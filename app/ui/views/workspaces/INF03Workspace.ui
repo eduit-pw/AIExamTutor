@@ -45,20 +45,16 @@
        </item>
       </layout>
      </widget>
-     <widget class="QPlainTextEdit" name="phpEditor">
-      <property name="placeholderText"><string>&lt;?php</string></property>
+    <widget class="MonacoEditor" name="phpEditor">
       <attribute name="title"><string>index.php</string></attribute>
      </widget>
-     <widget class="QPlainTextEdit" name="htmlEditor">
-      <property name="placeholderText"><string>&lt;!DOCTYPE html&gt;</string></property>
+    <widget class="MonacoEditor" name="htmlEditor">
       <attribute name="title"><string>index.html</string></attribute>
      </widget>
-     <widget class="QPlainTextEdit" name="cssEditor">
-      <property name="placeholderText"><string>body { ... }</string></property>
+    <widget class="MonacoEditor" name="cssEditor">
       <attribute name="title"><string>style.css</string></attribute>
      </widget>
-     <widget class="QPlainTextEdit" name="jsEditor">
-      <property name="placeholderText"><string>document.querySelector(...)</string></property>
+    <widget class="MonacoEditor" name="jsEditor">
       <attribute name="title"><string>script.js</string></attribute>
      </widget>
     </widget>
@@ -73,5 +69,12 @@
    </item>
   </layout>
  </widget>
+ <customwidgets>
+  <customwidget>
+   <class>MonacoEditor</class>
+   <extends>QWidget</extends>
+   <header>app.ui.monaco_editor</header>
+  </customwidget>
+ </customwidgets>
  <resources/><connections/>
 </ui>

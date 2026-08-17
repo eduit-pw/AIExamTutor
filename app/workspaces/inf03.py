@@ -48,16 +48,11 @@ from app.core.llm_client import LLMClient, LLMError
 from app.core.localization import translate
 from app.core.logger import get_logger
 from app.database.db_manager import DBManager
+from app.ui.monaco_editor import MonacoEditor
 from app.workspaces.base import BaseWorkspace
 from app.workspaces.factory import WorkspaceFactory
 from app.workspaces.inf03_grading import GradeWorker
-from app.workspaces.inf03_highlighters import (
-    CssHighlighter,
-    HtmlHighlighter,
-    JavaScriptHighlighter,
-    PhpHighlighter,
-    SqlHighlighter,
-)
+from app.workspaces.inf03_highlighters import SqlHighlighter
 
 logger = get_logger("workspace.inf03")
 
@@ -88,10 +83,10 @@ class INF03Workspace(BaseWorkspace):
         super().__init__(attempt_id, db, llm_client)
         self._root: QWidget | None = None
         self._sql_editor: QPlainTextEdit | None = None
-        self._php_editor: QPlainTextEdit | None = None
-        self._html_editor: QPlainTextEdit | None = None
-        self._css_editor: QPlainTextEdit | None = None
-        self._js_editor: QPlainTextEdit | None = None
+        self._php_editor: MonacoEditor | None = None
+        self._html_editor: MonacoEditor | None = None
+        self._css_editor: MonacoEditor | None = None
+        self._js_editor: MonacoEditor | None = None
         self._results_view: QTableView | None = None
         self._schema_combo: QComboBox | None = None
         self._status: QLabel | None = None
@@ -170,6 +165,7 @@ class INF03Workspace(BaseWorkspace):
     # ------------------------------------------------------------------
     def _load_from_ui(self) -> QWidget:
         loader = QUiLoader()
+        loader.registerCustomWidget(MonacoEditor)
         from importlib import resources
 
         with resources.as_file(
@@ -258,22 +254,18 @@ class INF03Workspace(BaseWorkspace):
         workspace_tabs.addTab(sql_tab, translate("INF03Workspace", "Database (SQL)"))
 
         # --- Source tabs ---
-        self._php_editor = QPlainTextEdit()
+        self._php_editor = MonacoEditor()
         self._php_editor.setObjectName("phpEditor")
-        self._php_editor.setPlaceholderText("<?php // PHP code")
-        PhpHighlighter(self._php_editor.document())
-        self._html_editor = QPlainTextEdit()
+        self._php_editor.set_language("php")
+        self._html_editor = MonacoEditor()
         self._html_editor.setObjectName("htmlEditor")
-        self._html_editor.setPlaceholderText("<!DOCTYPE html>...")
-        HtmlHighlighter(self._html_editor.document())
-        self._css_editor = QPlainTextEdit()
+        self._html_editor.set_language("html")
+        self._css_editor = MonacoEditor()
         self._css_editor.setObjectName("cssEditor")
-        self._css_editor.setPlaceholderText("body { ... }")
-        CssHighlighter(self._css_editor.document())
-        self._js_editor = QPlainTextEdit()
+        self._css_editor.set_language("css")
+        self._js_editor = MonacoEditor()
         self._js_editor.setObjectName("jsEditor")
-        self._js_editor.setPlaceholderText("document.querySelector(...)")
-        JavaScriptHighlighter(self._js_editor.document())
+        self._js_editor.set_language("javascript")
         workspace_tabs.addTab(self._php_editor, "index.php")
         workspace_tabs.addTab(self._html_editor, "index.html")
         workspace_tabs.addTab(self._css_editor, "style.css")
@@ -319,15 +311,15 @@ class INF03Workspace(BaseWorkspace):
         """After QUiLoader, locate child widgets by their objectName."""
         self._root = widget
         self._sql_editor = widget.findChild(QPlainTextEdit, "sqlEditor")
-        self._php_editor = widget.findChild(QPlainTextEdit, "phpEditor")
-        self._html_editor = widget.findChild(QPlainTextEdit, "htmlEditor")
-        self._css_editor = widget.findChild(QPlainTextEdit, "cssEditor")
+        self._php_editor = widget.findChild(MonacoEditor, "phpEditor")
+        self._html_editor = widget.findChild(MonacoEditor, "htmlEditor")
+        self._css_editor = widget.findChild(MonacoEditor, "cssEditor")
         self._results_view = widget.findChild(QTableView, "resultsTable")
         self._schema_combo = widget.findChild(QComboBox, "schemaComboBox")
         self._status = widget.findChild(QLabel, "statusLabel")
         self._connection_input = widget.findChild(QLineEdit, "connectionStringLineEdit")
         self._code_tabs = widget.findChild(QTabWidget, "workspaceTabs")
-        self._js_editor = widget.findChild(QPlainTextEdit, "jsEditor")
+        self._js_editor = widget.findChild(MonacoEditor, "jsEditor")
         # Fail loudly if any expected widget is missing — that means the .ui
         # was edited and forgot to rename something.
         for name, ref in (
@@ -344,10 +336,10 @@ class INF03Workspace(BaseWorkspace):
             if ref is None:
                 raise LookupError(f"INF03Workspace .ui missing widget {name!r}")
         SqlHighlighter(self._sql_editor.document())
-        PhpHighlighter(self._php_editor.document())
-        HtmlHighlighter(self._html_editor.document())
-        CssHighlighter(self._css_editor.document())
-        JavaScriptHighlighter(self._js_editor.document())
+        self._php_editor.set_language("php")
+        self._html_editor.set_language("html")
+        self._css_editor.set_language("css")
+        self._js_editor.set_language("javascript")
 
     # ------------------------------------------------------------------
     # Signal wiring + auto-save

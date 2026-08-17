@@ -18,6 +18,8 @@ from app.core.theme_manager import ThemeManager
 from app.database.db_manager import DBManager
 from app.ui.chat_panel import ChatPanel
 from app.ui.main_window import MainWindow
+from app.ui.monaco_editor import MonacoEditor
+from app.ui.pdf_viewer import PDFViewer
 from app.workspaces.inf03 import INF03Workspace
 
 
@@ -63,7 +65,15 @@ class INF03UiTests(unittest.TestCase):
         assert sql_splitter is not None
         self.assertGreater(sql_splitter.sizes()[0], sql_splitter.sizes()[1])
         self.assertEqual(len(editors), 5)
-        self.assertIsNotNone(root.findChild(QPlainTextEdit, "jsEditor"))
+        javascript_editor = root.findChild(MonacoEditor, "jsEditor")
+        self.assertIsNotNone(javascript_editor)
+        assert javascript_editor is not None
+        javascript_editor.setPlainText("const answer = 42;")
+        self.assertEqual(javascript_editor.toPlainText(), "const answer = 42;")
+        javascript_editor.set_theme("dark")
+        self.assertEqual(javascript_editor._theme, "vs-dark")
+        javascript_editor.set_theme("light")
+        self.assertEqual(javascript_editor._theme, "vs")
         root.close()
         workspace.deactivate()
 
@@ -113,8 +123,44 @@ class INF03UiTests(unittest.TestCase):
         self.assertTrue(empty_state.isVisible())
         self.assertGreaterEqual(panel._input.minimumHeight(), 56)
         self.assertGreaterEqual(panel._input.minimumWidth(), 180)
-        self.assertGreaterEqual(panel._send_btn.minimumWidth(), 126)
+        self.assertEqual(panel._send_btn.sizePolicy().horizontalPolicy().name, "Expanding")
         panel.close()
+
+    def test_pdf_toolbar_is_compact_and_polish_empty_state_is_used(self) -> None:
+        """
+        Scenario: PDF controls remain usable in the narrow left pane
+        Given: a new PDF viewer without a loaded document
+        When: the toolbar and empty state are inspected
+        Then: the snip action is compact and the empty state is Polish
+        """
+        # --- ARRANGE ---
+        viewer = PDFViewer()
+        # --- ACT ---
+        snip_button = viewer.findChild(QToolButton, "snipButton")
+        empty_text = viewer._image_label.text()
+        # --- ASSERT ---
+        self.assertIsNotNone(snip_button)
+        assert snip_button is not None
+        self.assertLessEqual(snip_button.width(), 30)
+        self.assertNotIn("\n", empty_text)
+        self.assertIn("Choose an exam sheet", empty_text)
+        viewer.close()
+
+    def test_main_window_keeps_pdf_pane_wide_enough_for_controls(self) -> None:
+        """
+        Scenario: the PDF pane has enough room for its own toolbar
+        Given: a newly constructed main window
+        When: the splitter panes are inspected
+        Then: the PDF pane has a 300 pixel minimum width
+        """
+        # --- ARRANGE ---
+        db = DBManager(":memory:")
+        window = MainWindow(db, ThemeManager(db))
+        # --- ACT ---
+        minimum_width = window._left_pane.minimumWidth()
+        # --- ASSERT ---
+        self.assertGreaterEqual(minimum_width, 300)
+        window.close()
 
     def test_startup_hides_status_bar_but_keeps_three_status_segments(self) -> None:
         """

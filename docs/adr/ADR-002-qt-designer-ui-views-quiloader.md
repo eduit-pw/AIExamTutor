@@ -9,6 +9,13 @@ Hardcoding UI layouts, nested widgets, and stylesheets directly inside Python cl
 ## Decision
 All window layouts, dialogs, and workspace components must be designed visually using **Qt Designer / Qt Creator** and saved as declarative `.ui` XML files inside `app/ui/views/`. Python controller classes dynamically load these files at runtime using `PySide6.QtUiTools.QUiLoader` and access widgets via their `objectName` identifiers.
 
+Declarative views may reference a small custom `QWidget` when the component
+owns a reusable rendering boundary that cannot be expressed by Qt Designer
+alone. The controller must register that class with `QUiLoader` before loading
+the view. The INF.03 source tabs use this rule for `MonacoEditor`; its fallback
+editor preserves the controller's text API without moving layout ownership
+back into the controller.
+
 ## Consequences
 ### Positive
 * Enforces the Single Responsibility Principle (SRP): visual presentation is isolated from application logic.

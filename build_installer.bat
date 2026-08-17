@@ -31,6 +31,7 @@ echo [1/2] Building application with PyInstaller...
   --add-data "translations;translations" ^
   --add-data "resources;resources" ^
   --collect-all PySide6 ^
+    --collect-all rocher ^
   --collect-all mysql.connector ^
   --collect-all pygments ^
     --icon "resources\eduit-favicon.ico" ^

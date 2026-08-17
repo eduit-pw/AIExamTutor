@@ -216,6 +216,7 @@ class ThemeManagerTests(unittest.TestCase):
         # --- ACT ---
         self.theme.apply(mock_app)
         # --- ASSERT ---
+        mock_app.setProperty.assert_called_once_with("ai_exam_tutor_theme", "dark")
         mock_app.setStyleSheet.assert_called_once()
         called_qss = mock_app.setStyleSheet.call_args[0][0]
         self.assertIn("background-color: #1e1e22", called_qss)  # DARK_QSS signature

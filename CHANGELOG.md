@@ -9,6 +9,33 @@ and releases use Semantic Versioning.
 
 No changes yet.
 
+## [1.2.0] - 2026-08-17
+
+### Added
+
+- Monaco Editor in the INF.03 PHP, HTML, CSS and JavaScript tabs, bundled locally through
+    the `rocher` package so the code editor does not require a network connection.
+- A deterministic `QPlainTextEdit` fallback for test, offscreen and unavailable-WebEngine
+    environments.
+- Theme synchronization between the application Light/Dark setting and Monaco's `vs`/
+    `vs-dark` palettes.
+
+### Changed
+
+- INF.03 source tabs keep one continuous editor frame with no nested border and a clean
+    active-tab connection.
+- The PDF toolbar uses compact controls suitable for the 300 px minimum left pane.
+- The AI send action fills the available input width and the panel header has clearer spacing.
+- PDF empty-state text is translated through the compiled Polish Qt catalog.
+- PyInstaller and CI now collect Rocher's local Monaco assets.
+
+### Known limitations
+
+- WebEngine rendering still depends on the Qt WebEngine runtime shipped with the installer;
+    unsupported environments use the compatible plain-text fallback.
+- MySQL must be running locally or on the configured network endpoint for SQL execution.
+- AI features require a configured BYOK provider; no API key is bundled.
+
 ## [1.1.0] - 2026-08-17
 
 ### Added
@@ -60,6 +87,7 @@ No changes yet.
 - Light and dark themes.
 - Windows PyInstaller and Inno Setup packaging.
 
-[Unreleased]: https://github.com/eduit-pw/AIExamTutor/compare/v1.1.0...HEAD
+[Unreleased]: https://github.com/eduit-pw/AIExamTutor/compare/v1.2.0...HEAD
+[1.2.0]: https://github.com/eduit-pw/AIExamTutor/releases/tag/v1.2.0
 [1.1.0]: https://github.com/eduit-pw/AIExamTutor/releases/tag/v1.1.0
 [1.0.0]: https://github.com/eduit-pw/AIExamTutor/releases/tag/v1.0.0

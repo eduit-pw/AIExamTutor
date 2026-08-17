@@ -78,7 +78,7 @@ jobs:
 
       - name: Build with PyInstaller
         run: |
-          pyinstaller --noconfirm --onedir --windowed --add-data "prompts;prompts" --add-data "app/database/schema.sql;app/database" --add-data "app/ui/views;app/ui/views" --add-data "translations;translations" --add-data "resources;resources" --collect-all PySide6 --collect-all mysql.connector --name "AI_Exam_Tutor" main.py
+          pyinstaller --noconfirm --onedir --windowed --add-data "prompts;prompts" --add-data "app/database/schema.sql;app/database" --add-data "app/ui/views;app/ui/views" --add-data "translations;translations" --add-data "resources;resources" --collect-all PySide6 --collect-all rocher --collect-all mysql.connector --name "AI_Exam_Tutor" main.py
 
       - name: Compile Inno Setup installer
         run: |

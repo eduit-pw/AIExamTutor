@@ -14,8 +14,8 @@ from PySide6.QtWidgets import (
     QComboBox,
     QHBoxLayout,
     QLabel,
-    QPushButton,
     QScrollArea,
+    QToolButton,
     QVBoxLayout,
     QWidget,
 )
@@ -50,7 +50,8 @@ class PDFViewer(QWidget):
 
     def _build_ui(self) -> None:
         layout = QVBoxLayout(self)
-        layout.setContentsMargins(4, 4, 4, 4)
+        layout.setContentsMargins(6, 6, 6, 6)
+        layout.setSpacing(6)
 
         # Toolbar
         toolbar = QHBoxLayout()
@@ -58,21 +59,27 @@ class PDFViewer(QWidget):
         self._page_combo.setObjectName("pageComboBox")
         self._page_combo.addItem("—")
         self._page_combo.setEnabled(False)
-        self._page_combo.setMinimumWidth(72)
+        self._page_combo.setMinimumWidth(56)
+        self._page_combo.setMaximumWidth(82)
         self._page_combo.currentIndexChanged.connect(self._on_page_changed)
         toolbar.addWidget(QLabel(translate("PDFViewer", "Page:")))
         toolbar.addWidget(self._page_combo, 1)
 
         self._zoom_combo = QComboBox()
         self._zoom_combo.setObjectName("zoomComboBox")
-        self._zoom_combo.setMinimumWidth(72)
+        self._zoom_combo.setMinimumWidth(56)
+        self._zoom_combo.setMaximumWidth(72)
         self._zoom_combo.addItems(["75%", "100%", "150%", "200%", "300%"])
         self._zoom_combo.setCurrentIndex(3)  # 200%
         self._zoom_combo.currentIndexChanged.connect(self._on_zoom_changed)
         toolbar.addWidget(QLabel(translate("PDFViewer", "Zoom:")))
         toolbar.addWidget(self._zoom_combo)
 
-        snip_btn = QPushButton(translate("PDFViewer", "Snip"))
+        snip_btn = QToolButton()
+        snip_btn.setObjectName("snipButton")
+        snip_btn.setText("✂")
+        snip_btn.setFixedSize(30, 30)
+        snip_btn.setAutoRaise(True)
         snip_btn.setToolTip(translate("PDFViewer", "Snip Region (Ctrl+Shift+S)"))
         snip_btn.clicked.connect(self._start_snip)
         toolbar.addWidget(snip_btn)
@@ -91,7 +98,7 @@ class PDFViewer(QWidget):
         self._image_label.setText(
             translate(
                 "PDFViewer",
-                "📄\nChoose an exam sheet from the menu or drag a PDF file here",
+                "Choose an exam sheet from the menu or drag a PDF file here",
             )
         )
         self._image_label.setAlignment(Qt.AlignmentFlag.AlignCenter)

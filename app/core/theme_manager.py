@@ -47,6 +47,8 @@ QTabBar::tab {
     border: 1px solid #c1c8d2; border-bottom: none;
 }
 QTabBar::tab:selected { background-color: #ffffff; color: #174a82; font-weight: 700; }
+QTabBar::tab:selected { margin-bottom: -1px; }
+MonacoEditor { border: none; background-color: #ffffff; }
 QTableView {
     background-color: #ffffff; alternate-background-color: #f0f0f3;
     gridline-color: #d1d1d6;
@@ -152,6 +154,8 @@ QTabBar::tab {
     border: 1px solid #68788b; border-bottom: none;
 }
 QTabBar::tab:selected { background-color: #303b4a; color: #ffffff; font-weight: 700; }
+QTabBar::tab:selected { margin-bottom: -1px; }
+MonacoEditor { border: none; background-color: #2c2c30; }
 QTableView {
     background-color: #2c2c30; alternate-background-color: #252529;
     gridline-color: #3a3a3e;
@@ -241,7 +245,9 @@ class ThemeManager:
 
     def apply(self, app: QApplication) -> None:
         """Apply the current theme to a QApplication."""
-        qss = LIGHT_QSS if self.current() == self.LIGHT else DARK_QSS
+        theme = self.current()
+        qss = LIGHT_QSS if theme == self.LIGHT else DARK_QSS
+        app.setProperty("ai_exam_tutor_theme", theme)
         app.setStyleSheet(qss)
 
     def toggle(self, app: QApplication) -> str:
