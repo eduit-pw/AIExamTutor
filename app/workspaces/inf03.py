@@ -1,4 +1,4 @@
-"""INF.03 reference workspace — SQL Runner + PHP/HTML editor.
+"""INF.03 reference workspace — SQL Runner + PHP/HTML/CSS/JavaScript editor.
 
 This is the only fully-implemented workspace in v1.0. It exercises every
 piece of the architecture: QUiLoader for the widget tree, the 500 ms debounce
@@ -38,6 +38,7 @@ from PySide6.QtWidgets import (
     QSplitter,
     QTableView,
     QTabWidget,
+    QToolButton,
     QVBoxLayout,
     QWidget,
 )
@@ -53,6 +54,7 @@ from app.workspaces.inf03_grading import GradeWorker
 from app.workspaces.inf03_highlighters import (
     CssHighlighter,
     HtmlHighlighter,
+    JavaScriptHighlighter,
     PhpHighlighter,
     SqlHighlighter,
 )
@@ -69,12 +71,18 @@ DEFAULT_CONNECTION_STRING = "mysql://root:@localhost:3306/"
 # Workspace
 # ----------------------------------------------------------------------
 class INF03Workspace(BaseWorkspace):
-    """SQL Runner (top) + PHP/HTML editor (bottom), per spec §0.2."""
+    """SQL Runner plus PHP/HTML/CSS/JavaScript editor, per spec §0.2."""
 
     workspace_id = "inf03"
-    display_name = "INF.03 — SQL & PHP/HTML"
+    display_name = "INF.03 — SQL & PHP/HTML/CSS/JavaScript"
 
-    DEFAULT_FILES: tuple[str, ...] = ("query.sql", "index.php", "index.html", "style.css")
+    DEFAULT_FILES: tuple[str, ...] = (
+        "query.sql",
+        "index.php",
+        "index.html",
+        "style.css",
+        "script.js",
+    )
 
     def __init__(self, attempt_id: int, db: DBManager, llm_client: LLMClient) -> None:
         super().__init__(attempt_id, db, llm_client)
@@ -83,20 +91,27 @@ class INF03Workspace(BaseWorkspace):
         self._php_editor: QPlainTextEdit | None = None
         self._html_editor: QPlainTextEdit | None = None
         self._css_editor: QPlainTextEdit | None = None
+        self._js_editor: QPlainTextEdit | None = None
         self._results_view: QTableView | None = None
         self._schema_combo: QComboBox | None = None
         self._status: QLabel | None = None
         self._autosave_timer: QTimer | None = None
         self._connection_input: QLineEdit | None = None
         self._code_tabs: QTabWidget | None = None
+        self._splitter_timer: QTimer | None = None
         self._grade_worker: GradeWorker | None = None
         self._check_button: QPushButton | None = None
         self._active = True
         self._status_callback = None
+        self._connection_callback = None
 
     def set_status_callback(self, callback) -> None:
-        """Send workspace connection status messages to the main status bar."""
+        """Send workspace feedback messages to the main status bar."""
         self._status_callback = callback
+
+    def set_connection_callback(self, callback) -> None:
+        """Notify the main window when the database connection succeeds."""
+        self._connection_callback = callback
 
     def deactivate(self) -> None:
         """Ignore late worker results when this workspace leaves the UI."""
@@ -111,15 +126,19 @@ class INF03Workspace(BaseWorkspace):
         Both code paths produce widgets with the SAME objectNames so the
         rest of this class doesn't care which path was taken.
         """
+        logger.info("Building INF.03 widget")
         try:
             widget = self._load_from_ui()
         except (FileNotFoundError, LookupError):
             logger.warning("INF03Workspace.ui not found; building programmatically")
             widget = self._build_programmatic()
 
+        logger.info("Wiring INF.03 widget signals")
         self._wire_signals(widget)
+        logger.info("Restoring INF.03 drafts")
         self._restore_drafts(widget)
         self._configure_splitter(widget)
+        logger.info("INF.03 widget ready")
         return widget
 
     def build_context_payload(self) -> dict[str, Any]:
@@ -129,6 +148,7 @@ class INF03Workspace(BaseWorkspace):
             "php_source": self._current_php(),
             "html_source": self._current_html(),
             "css_source": self._current_css(),
+            "javascript_source": self._current_javascript(),
             "schema": self._current_schema(),
         }
 
@@ -157,10 +177,12 @@ class INF03Workspace(BaseWorkspace):
         ) as ui_path:
             if not ui_path.exists():
                 raise FileNotFoundError(str(ui_path))
+            logger.info("Loading INF.03 declarative view: %s", ui_path)
             widget = loader.load(str(ui_path))  # type: ignore[arg-type]
         if widget is None:
             raise FileNotFoundError("QUiLoader returned None")
         self._capture_widget_refs(widget)
+        logger.info("INF.03 declarative view loaded and references captured")
         return widget
 
     def _build_programmatic(self) -> QWidget:
@@ -174,7 +196,12 @@ class INF03Workspace(BaseWorkspace):
         outer = QVBoxLayout(root)
         outer.setContentsMargins(8, 8, 8, 8)
 
-        # --- Top row: schema picker + run button ---
+        workspace_tabs = QTabWidget()
+        workspace_tabs.setObjectName("workspaceTabs")
+
+        # --- SQL tab ---
+        sql_tab = QWidget()
+        sql_layout = QVBoxLayout(sql_tab)
         top_row = QHBoxLayout()
         self._schema_combo = QComboBox()
         self._schema_combo.setObjectName("schemaComboBox")
@@ -184,9 +211,20 @@ class INF03Workspace(BaseWorkspace):
         top_row.addWidget(QLabel(translate("INF03Workspace", "Schema")))
         top_row.addWidget(self._schema_combo, 1)
         top_row.addWidget(run_btn)
-        outer.addLayout(top_row)
+        sql_layout.addLayout(top_row)
 
-        connection_row = QHBoxLayout()
+        connection_toggle = QToolButton()
+        connection_toggle.setObjectName("connectionSettingsToggle")
+        connection_toggle.setText(translate("INF03Workspace", "Database connection settings"))
+        connection_toggle.setCheckable(True)
+        connection_toggle.setChecked(False)
+        connection_toggle.setArrowType(Qt.ArrowType.RightArrow)
+        sql_layout.addWidget(connection_toggle)
+
+        connection_panel = QWidget()
+        connection_panel.setObjectName("connectionSettingsPanel")
+        connection_panel.setVisible(False)
+        connection_row = QHBoxLayout(connection_panel)
         connection_row.addWidget(QLabel(translate("INF03Workspace", "Connection")))
         self._connection_input = QLineEdit(
             self.db.get_config(cfg.MYSQL_CONNECTION, DEFAULT_CONNECTION_STRING)
@@ -200,11 +238,7 @@ class INF03Workspace(BaseWorkspace):
         test_connection = QPushButton(translate("INF03Workspace", "Test"))
         test_connection.setObjectName("testConnectionButton")
         connection_row.addWidget(test_connection)
-        outer.addLayout(connection_row)
-
-        # --- SQL editor / results table ---
-        main_splitter = QSplitter(Qt.Orientation.Vertical)
-        main_splitter.setObjectName("mainWorkspaceSplitter")
+        sql_layout.addWidget(connection_panel)
 
         sql_splitter = QSplitter(Qt.Orientation.Vertical)
         sql_splitter.setObjectName("sqlSplitter")
@@ -220,9 +254,10 @@ class INF03Workspace(BaseWorkspace):
         self._results_view.setAlternatingRowColors(True)
         self._results_view.horizontalHeader().setSectionResizeMode(QHeaderView.ResizeMode.Stretch)
         sql_splitter.addWidget(self._results_view)
-        main_splitter.addWidget(sql_splitter)
+        sql_layout.addWidget(sql_splitter, 1)
+        workspace_tabs.addTab(sql_tab, translate("INF03Workspace", "Database (SQL)"))
 
-        # --- PHP + HTML editors in a horizontal splitter ---
+        # --- Source tabs ---
         self._php_editor = QPlainTextEdit()
         self._php_editor.setObjectName("phpEditor")
         self._php_editor.setPlaceholderText("<?php // PHP code")
@@ -235,56 +270,50 @@ class INF03Workspace(BaseWorkspace):
         self._css_editor.setObjectName("cssEditor")
         self._css_editor.setPlaceholderText("body { ... }")
         CssHighlighter(self._css_editor.document())
-        code_tabs = QTabWidget()
-        code_tabs.setObjectName("codeTabs")
-        code_tabs.addTab(self._php_editor, "index.php")
-        code_tabs.addTab(self._html_editor, "index.html")
-        code_tabs.addTab(self._css_editor, "style.css")
-        self._code_tabs = code_tabs
+        self._js_editor = QPlainTextEdit()
+        self._js_editor.setObjectName("jsEditor")
+        self._js_editor.setPlaceholderText("document.querySelector(...)")
+        JavaScriptHighlighter(self._js_editor.document())
+        workspace_tabs.addTab(self._php_editor, "index.php")
+        workspace_tabs.addTab(self._html_editor, "index.html")
+        workspace_tabs.addTab(self._css_editor, "style.css")
+        workspace_tabs.addTab(self._js_editor, "script.js")
+        self._code_tabs = workspace_tabs
+        outer.addWidget(workspace_tabs, 1)
 
-        code_panel = QWidget()
-        code_panel.setObjectName("codePanel")
-        code_layout = QVBoxLayout(code_panel)
-        code_layout.setContentsMargins(6, 6, 6, 6)
-        code_layout.addWidget(QLabel(translate("INF03Workspace", "PHP / HTML")))
-        code_layout.addWidget(code_tabs)
-        save_code = QPushButton(translate("INF03Workspace", "Save current file"))
+        code_actions = QHBoxLayout()
+        code_actions.addStretch()
+        save_code = QPushButton(translate("INF03Workspace", "Save file"))
         save_code.setObjectName("saveCodeButton")
-        code_layout.addWidget(save_code)
         check_task = QPushButton(translate("INF03Workspace", "Check task"))
         check_task.setObjectName("checkTaskButton")
-        code_layout.addWidget(check_task)
-        main_splitter.addWidget(code_panel)
-        main_splitter.setStretchFactor(0, 2)
-        main_splitter.setStretchFactor(1, 3)
-        outer.addWidget(main_splitter, 1)
-
-        browser_btn = QPushButton(translate("INF03Workspace", "Run in browser"))
+        browser_btn = QPushButton(translate("INF03Workspace", "Preview"))
+        browser_btn.setToolTip(translate("INF03Workspace", "Preview in browser"))
         browser_btn.setObjectName("runBrowserButton")
-        outer.addWidget(browser_btn)
-
-        # --- Status bar ---
-        self._status = QLabel(translate("INF03Workspace", "Ready."))
-        self._status.setObjectName("statusLabel")
-        outer.addWidget(self._status)
+        for button in (save_code, browser_btn, check_task):
+            code_actions.addWidget(button)
+        outer.addLayout(code_actions)
 
         self._root = root
         return root
 
     def _configure_splitter(self, widget: QWidget) -> None:
-        """Give code more space and keep the main splitter user-adjustable."""
-        splitter = widget.findChild(QSplitter, "mainWorkspaceSplitter")
+        """Give the active editor most of the SQL tab and keep it adjustable."""
+        splitter = widget.findChild(QSplitter, "sqlSplitter")
         if splitter is None:
             return
-        splitter.setStretchFactor(0, 2)
-        splitter.setStretchFactor(1, 3)
+        splitter.setStretchFactor(0, 3)
+        splitter.setStretchFactor(1, 1)
 
         def set_initial_sizes() -> None:
             total = splitter.height()
             if total > 0:
-                splitter.setSizes([int(total * 0.4), int(total * 0.6)])
+                splitter.setSizes([int(total * 0.72), int(total * 0.28)])
 
-        QTimer.singleShot(0, set_initial_sizes)
+        self._splitter_timer = QTimer(splitter)
+        self._splitter_timer.setSingleShot(True)
+        self._splitter_timer.timeout.connect(set_initial_sizes)
+        self._splitter_timer.start(0)
 
     def _capture_widget_refs(self, widget: QWidget) -> None:
         """After QUiLoader, locate child widgets by their objectName."""
@@ -297,7 +326,8 @@ class INF03Workspace(BaseWorkspace):
         self._schema_combo = widget.findChild(QComboBox, "schemaComboBox")
         self._status = widget.findChild(QLabel, "statusLabel")
         self._connection_input = widget.findChild(QLineEdit, "connectionStringLineEdit")
-        self._code_tabs = widget.findChild(QTabWidget, "codeTabs")
+        self._code_tabs = widget.findChild(QTabWidget, "workspaceTabs")
+        self._js_editor = widget.findChild(QPlainTextEdit, "jsEditor")
         # Fail loudly if any expected widget is missing — that means the .ui
         # was edited and forgot to rename something.
         for name, ref in (
@@ -307,9 +337,9 @@ class INF03Workspace(BaseWorkspace):
             ("cssEditor", self._css_editor),
             ("resultsTable", self._results_view),
             ("schemaComboBox", self._schema_combo),
-            ("statusLabel", self._status),
             ("connectionStringLineEdit", self._connection_input),
-            ("codeTabs", self._code_tabs),
+            ("workspaceTabs", self._code_tabs),
+            ("jsEditor", self._js_editor),
         ):
             if ref is None:
                 raise LookupError(f"INF03Workspace .ui missing widget {name!r}")
@@ -317,6 +347,7 @@ class INF03Workspace(BaseWorkspace):
         PhpHighlighter(self._php_editor.document())
         HtmlHighlighter(self._html_editor.document())
         CssHighlighter(self._css_editor.document())
+        JavaScriptHighlighter(self._js_editor.document())
 
     # ------------------------------------------------------------------
     # Signal wiring + auto-save
@@ -329,7 +360,13 @@ class INF03Workspace(BaseWorkspace):
         self._autosave_timer.timeout.connect(self._flush_drafts)
 
         # Restart the debounce on every text change.
-        for editor in (self._sql_editor, self._php_editor, self._html_editor, self._css_editor):
+        for editor in (
+            self._sql_editor,
+            self._php_editor,
+            self._html_editor,
+            self._css_editor,
+            self._js_editor,
+        ):
             assert editor is not None
             editor.textChanged.connect(self._autosave_timer.start)
 
@@ -355,6 +392,16 @@ class INF03Workspace(BaseWorkspace):
             self._check_button = widget.findChild(QPushButton, "checkTaskButton")
             if self._check_button is not None:
                 self._check_button.clicked.connect(self._check_task)
+        connection_toggle = widget.findChild(QToolButton, "connectionSettingsToggle")
+        connection_panel = widget.findChild(QWidget, "connectionSettingsPanel")
+        if connection_toggle is not None and connection_panel is not None:
+            connection_panel.setVisible(connection_toggle.isChecked())
+            connection_toggle.toggled.connect(connection_panel.setVisible)
+            connection_toggle.toggled.connect(
+                lambda expanded: connection_toggle.setArrowType(
+                    Qt.ArrowType.DownArrow if expanded else Qt.ArrowType.RightArrow
+                )
+            )
         self._load_schemas()
 
     def _restore_drafts(self, _widget: QWidget) -> None:
@@ -364,6 +411,7 @@ class INF03Workspace(BaseWorkspace):
             (self._php_editor, "index.php"),
             (self._html_editor, "index.html"),
             (self._css_editor, "style.css"),
+            (self._js_editor, "script.js"),
         ):
             if editor is None:
                 continue
@@ -378,6 +426,7 @@ class INF03Workspace(BaseWorkspace):
             (self._php_editor, "index.php"),
             (self._html_editor, "index.html"),
             (self._css_editor, "style.css"),
+            (self._js_editor, "script.js"),
         ):
             if editor is None:
                 continue
@@ -401,7 +450,9 @@ class INF03Workspace(BaseWorkspace):
             rows, columns = self._execute_mysql(schema, query)
         except Exception as exc:  # noqa: BLE001 — surface as status text
             logger.exception("SQL execution failed")
-            self._set_status(translate("INF03Workspace", "MySQL error: %1").replace("%1", str(exc)))
+            self._set_status(
+                translate("INF03Workspace", "MySQL error: %1").replace("%1", str(exc))
+            )
             return
         elapsed_ms = int((time.perf_counter() - start) * 1000)
 
@@ -502,8 +553,8 @@ class INF03Workspace(BaseWorkspace):
             self._save_connection_string()
             message = translate("INF03Workspace", "MySQL connection OK.")
             self._set_status(message)
-            if self._status_callback is not None:
-                self._status_callback(message)
+            if self._connection_callback is not None:
+                self._connection_callback(message)
             self._load_schemas()
         except Exception as exc:  # noqa: BLE001
             self._set_status(
@@ -546,6 +597,7 @@ class INF03Workspace(BaseWorkspace):
         html = self._current_html()
         php = self._current_php()
         css = self._current_css()
+        javascript = self._current_javascript()
         content = html or php
         file_name = "index.html" if html else "index.php"
         if not content:
@@ -557,6 +609,8 @@ class INF03Workspace(BaseWorkspace):
         target.write_text(content, encoding="utf-8")
         if html and css:
             (folder / "style.css").write_text(css, encoding="utf-8")
+        if html and javascript:
+            (folder / "script.js").write_text(javascript, encoding="utf-8")
         QDesktopServices.openUrl(QUrl.fromLocalFile(str(target)))
         self._set_status(
             translate("INF03Workspace", "Opened %1 in the default browser.").replace(
@@ -565,15 +619,20 @@ class INF03Workspace(BaseWorkspace):
         )
 
     def _save_current_file(self) -> None:
-        """Save the selected PHP, HTML, or CSS tab to its corresponding file."""
+        """Save the selected PHP, HTML, CSS, or JavaScript tab to its file."""
         if self._code_tabs is None:
+            return
+        file_index = self._code_tabs.currentIndex() - 1
+        if file_index < 0:
+            self._set_status(translate("INF03Workspace", "Select a source file first."))
             return
         files = (
             (self._php_editor, "index.php", "PHP files (*.php)"),
             (self._html_editor, "index.html", "HTML files (*.html)"),
             (self._css_editor, "style.css", "CSS files (*.css)"),
+            (self._js_editor, "script.js", "JavaScript files (*.js)"),
         )
-        editor, file_name, file_filter = files[self._code_tabs.currentIndex()]
+        editor, file_name, file_filter = files[file_index]
         if editor is None:
             return
         saved_path = (
@@ -594,6 +653,8 @@ class INF03Workspace(BaseWorkspace):
     def _set_status(self, text: str) -> None:
         if self._status is not None:
             self._status.setText(text)
+        if self._status_callback is not None:
+            self._status_callback(text)
 
     def _check_task(self) -> None:
         """Start asynchronous grading and persist the returned score."""
@@ -690,6 +751,7 @@ class INF03Workspace(BaseWorkspace):
             "php_source": self._current_php(),
             "html_source": self._current_html(),
             "css_source": self._current_css(),
+            "javascript_source": self._current_javascript(),
             "schema": self._current_schema(),
         }
         return [
@@ -738,6 +800,9 @@ class INF03Workspace(BaseWorkspace):
     def _current_css(self) -> str:
         return self._css_editor.toPlainText() if self._css_editor else ""
 
+    def _current_javascript(self) -> str:
+        return self._js_editor.toPlainText() if self._js_editor else ""
+
     def _current_schema(self) -> str:
         if self._schema_combo is None:
             return ""
@@ -767,6 +832,7 @@ class INF03Workspace(BaseWorkspace):
             f"php_len={len(context.get('php_source', ''))} "
             f"html_len={len(context.get('html_source', ''))} "
             f"css_len={len(context.get('css_source', ''))} "
+            f"javascript_len={len(context.get('javascript_source', ''))} "
             f"schema={context.get('schema', '')!r}"
         )
         self.db.add_message(self.attempt_id, "system", context_note)
@@ -797,9 +863,10 @@ class INF03Workspace(BaseWorkspace):
         except (ModuleNotFoundError, FileNotFoundError):
             pass
         return (
-            "You are a Socratic tutor for Polish vocational INF.03 (SQL, PHP, HTML, CSS) "
-            "exam prep. Never reveal the final SQL query, PHP code, HTML markup, or CSS "
-            "stylesheet directly. Always ask a guiding question first."
+            "You are a Socratic tutor for Polish vocational INF.03 "
+            "(SQL, PHP, HTML, CSS, JavaScript) exam prep. Never reveal the final SQL query, "
+            "PHP code, HTML markup, CSS stylesheet, or JavaScript directly. "
+            "Always ask a guiding question first."
         )
 
 

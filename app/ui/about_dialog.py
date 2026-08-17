@@ -145,7 +145,7 @@ class AboutDialog(QDialog):
         if close_button is not None:
             close_button.setText(translate("AboutDialog", "Close"))
         if title_label is not None:
-            title_label.setText(translate("AboutDialog", "<b>AI Exam Tutor</b><br/>Version 1.0.0"))
+            title_label.setText(translate("AboutDialog", "<b>AI Exam Tutor</b><br/>Version 1.1.0"))
         support_label.setText(
             translate(
                 "AboutDialog",

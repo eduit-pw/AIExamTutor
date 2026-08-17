@@ -33,6 +33,7 @@ except ImportError:
 class PDFViewer(QWidget):
     """Scrollable PDF viewer with page selector, zoom, and snip-to-Vision."""
 
+    status_changed = Signal(str)
     # Emitted when user finishes a snip region (returns PNG bytes)
     region_snipped = Signal(bytes)
 
@@ -54,18 +55,25 @@ class PDFViewer(QWidget):
         # Toolbar
         toolbar = QHBoxLayout()
         self._page_combo = QComboBox()
+        self._page_combo.setObjectName("pageComboBox")
+        self._page_combo.addItem("—")
+        self._page_combo.setEnabled(False)
+        self._page_combo.setMinimumWidth(72)
         self._page_combo.currentIndexChanged.connect(self._on_page_changed)
         toolbar.addWidget(QLabel(translate("PDFViewer", "Page:")))
-        toolbar.addWidget(self._page_combo)
+        toolbar.addWidget(self._page_combo, 1)
 
         self._zoom_combo = QComboBox()
+        self._zoom_combo.setObjectName("zoomComboBox")
+        self._zoom_combo.setMinimumWidth(72)
         self._zoom_combo.addItems(["75%", "100%", "150%", "200%", "300%"])
         self._zoom_combo.setCurrentIndex(3)  # 200%
         self._zoom_combo.currentIndexChanged.connect(self._on_zoom_changed)
         toolbar.addWidget(QLabel(translate("PDFViewer", "Zoom:")))
         toolbar.addWidget(self._zoom_combo)
 
-        snip_btn = QPushButton(translate("PDFViewer", "Snip Region (Ctrl+Shift+S)"))
+        snip_btn = QPushButton(translate("PDFViewer", "Snip"))
+        snip_btn.setToolTip(translate("PDFViewer", "Snip Region (Ctrl+Shift+S)"))
         snip_btn.clicked.connect(self._start_snip)
         toolbar.addWidget(snip_btn)
 
@@ -74,20 +82,28 @@ class PDFViewer(QWidget):
 
         # Scroll area with image label
         self._scroll = QScrollArea()
+        self._scroll.setObjectName("pdfScroll")
         self._scroll.setWidgetResizable(True)
         self._scroll.setAlignment(Qt.AlignmentFlag.AlignCenter)
 
         self._image_label = QLabel()
+        self._image_label.setObjectName("pdfEmptyState")
+        self._image_label.setText(
+            translate(
+                "PDFViewer",
+                "📄\nChoose an exam sheet from the menu or drag a PDF file here",
+            )
+        )
         self._image_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        self._image_label.setWordWrap(True)
+        self._image_label.setMinimumSize(240, 180)
         self._image_label.setMouseTracking(True)
         self._image_label.installEventFilter(self)
 
         self._scroll.setWidget(self._image_label)
         layout.addWidget(self._scroll)
 
-        # Status
-        self._status = QLabel(translate("PDFViewer", "No PDF loaded"))
-        layout.addWidget(self._status)
+        self._status = QLabel()
 
         # Shortcuts
         QShortcut(QKeySequence("Ctrl+Shift+S"), self, activated=self._start_snip)
@@ -98,7 +114,7 @@ class PDFViewer(QWidget):
     def load_pdf(self, path: str) -> bool:
         """Open a PDF file. Returns True on success."""
         if not FITZ_AVAILABLE:
-            self._status.setText(translate("PDFViewer", "PyMuPDF not available"))
+            self._set_status(translate("PDFViewer", "PyMuPDF not available"))
             return False
 
         try:
@@ -107,17 +123,18 @@ class PDFViewer(QWidget):
             self._doc = fitz.open(path)
             self._current_page = 0
             self._page_combo.clear()
+            self._page_combo.setEnabled(True)
             for i in range(self._doc.page_count):
                 self._page_combo.addItem(f"{i + 1} / {self._doc.page_count}")
             self._render_current_page()
-            self._status.setText(
+            self._set_status(
                 translate("PDFViewer", "Loaded: %1 (%2 pages)")
                 .replace("%1", Path(path).name)
                 .replace("%2", str(self._doc.page_count))
             )
             return True
         except Exception as exc:  # noqa: BLE001
-            self._status.setText(
+            self._set_status(
                 translate("PDFViewer", "Failed to load PDF: %1").replace("%1", str(exc))
             )
             return False
@@ -135,6 +152,7 @@ class PDFViewer(QWidget):
         img = QImage(pix.samples, pix.width, pix.height, pix.stride, QImage.Format.Format_RGB888)
         self._pixmap = QPixmap.fromImage(img)
         self._image_label.setPixmap(self._pixmap)
+        self._image_label.setText("")
         self._image_label.resize(self._pixmap.size())
         self._page_combo.setCurrentIndex(self._current_page)
 
@@ -164,7 +182,7 @@ class PDFViewer(QWidget):
             return
         self._snipping = True
         self._image_label.setCursor(Qt.CursorShape.CrossCursor)
-        self._status.setText(translate("PDFViewer", "Drag to select region... (Esc to cancel)"))
+        self._set_status(translate("PDFViewer", "Drag to select region... (Esc to cancel)"))
 
     def eventFilter(self, obj, event) -> bool:  # noqa: D102
         if obj is self._image_label and self._snipping:
@@ -233,7 +251,7 @@ class PDFViewer(QWidget):
         self._snip_rect = None
         self._image_label.setCursor(Qt.CursorShape.ArrowCursor)
         self._render_current_page()  # redraw without overlay
-        self._status.setText(translate("PDFViewer", "Region captured → sent to AI Tutor"))
+        self._set_status(translate("PDFViewer", "Region captured → sent to AI Tutor"))
 
     def _cancel_snip(self) -> None:
         self._snipping = False
@@ -241,7 +259,11 @@ class PDFViewer(QWidget):
         self._snip_rect = None
         self._image_label.setCursor(Qt.CursorShape.ArrowCursor)
         self._render_current_page()
-        self._status.setText(translate("PDFViewer", "Snip cancelled"))
+        self._set_status(translate("PDFViewer", "Snip cancelled"))
+
+    def _set_status(self, text: str) -> None:
+        self._status.setText(text)
+        self.status_changed.emit(text)
 
     # ------------------------------------------------------------------
     # Public helpers

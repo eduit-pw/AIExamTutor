@@ -58,12 +58,12 @@ class WorkspaceFactoryTests(unittest.TestCase):
         Scenario: display_name_for returns the human-readable label
         Given: WorkspaceFactory with INF03 registered
         When:  display_name_for('inf03') is called
-        Then:  returns 'INF.03 — SQL & PHP/HTML'
+        Then:  returns 'INF.03 — SQL & PHP/HTML/CSS/JavaScript'
         """
         # --- ARRANGE / ACT ---
         name = WorkspaceFactory.display_name_for("inf03")
         # --- ASSERT ---
-        self.assertEqual(name, "INF.03 — SQL & PHP/HTML")
+        self.assertEqual(name, "INF.03 — SQL & PHP/HTML/CSS/JavaScript")
 
     def test_create_inf03_returns_workspace(self) -> None:
         """
@@ -124,11 +124,14 @@ class INF03WorkspaceTests(unittest.TestCase):
         Scenario: workspace_id and display_name class attributes are correct
         Given: INF03Workspace class
         When:  I inspect workspace_id and display_name
-        Then:  they equal 'inf03' and 'INF.03 — SQL & PHP/HTML'
+        Then:  they equal 'inf03' and 'INF.03 — SQL & PHP/HTML/CSS/JavaScript'
         """
         # --- ARRANGE / ACT / ASSERT ---
         self.assertEqual(INF03Workspace.workspace_id, "inf03")
-        self.assertEqual(INF03Workspace.display_name, "INF.03 — SQL & PHP/HTML")
+        self.assertEqual(
+            INF03Workspace.display_name,
+            "INF.03 — SQL & PHP/HTML/CSS/JavaScript",
+        )
 
     def test_constructor_stores_dependencies(self) -> None:
         """
@@ -157,7 +160,14 @@ class INF03WorkspaceTests(unittest.TestCase):
         payload = ws.build_context_payload()
         # --- ASSERT ---
         self.assertIsInstance(payload, dict)
-        expected_keys = {"sql_query", "php_source", "html_source", "css_source", "schema"}
+        expected_keys = {
+            "sql_query",
+            "php_source",
+            "html_source",
+            "css_source",
+            "javascript_source",
+            "schema",
+        }
         self.assertEqual(set(payload.keys()), expected_keys)
 
     def test_default_files_include_css(self) -> None:
@@ -172,6 +182,7 @@ class INF03WorkspaceTests(unittest.TestCase):
         files = INF03Workspace.DEFAULT_FILES
         # --- ASSERT ---
         self.assertIn("style.css", files)
+        self.assertIn("script.js", files)
 
     def test_build_context_payload_includes_css_content(self) -> None:
         """

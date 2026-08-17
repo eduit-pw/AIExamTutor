@@ -84,9 +84,10 @@ class ChatPanel(QWidget):
     def _build_ui(self) -> None:
         layout = QVBoxLayout(self)
         layout.setContentsMargins(8, 8, 8, 8)
+        self.setMinimumWidth(300)
 
         # Header
-        header = QLabel(translate("ChatPanel", "AI Tutor (Socratic)"))
+        header = QLabel(translate("ChatPanel", "AI Assistant"))
         header.setStyleSheet("font-weight: bold; padding: 4px;")
         layout.addWidget(header)
 
@@ -97,6 +98,19 @@ class ChatPanel(QWidget):
         self._history_widget = QWidget()
         self._history_layout = QVBoxLayout(self._history_widget)
         self._history_layout.setAlignment(self._history_layout.alignment() | 0x0080)  # AlignTop
+        self._empty_state = QLabel(
+            translate(
+                "ChatPanel",
+                "Ask about the exam sheet or paste code you need help with.",
+            )
+        )
+        self._empty_state.setObjectName("emptyState")
+        self._empty_state.setWordWrap(True)
+        self._empty_state.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        self._empty_state.setMinimumHeight(96)
+        self._empty_state.setProperty("chatEmptyState", True)
+        self._empty_state.setStyleSheet("padding: 18px;")
+        self._history_layout.addWidget(self._empty_state)
         self._scroll.setWidget(self._history_widget)
         layout.addWidget(self._scroll, 1)
 
@@ -105,16 +119,20 @@ class ChatPanel(QWidget):
         self._attachment_label = QLabel("")
         input_layout.addWidget(self._attachment_label)
 
-        text_row = QHBoxLayout()
         self._input = QPlainTextEdit()
-        self._input.setPlaceholderText(translate("ChatPanel", "Ask the AI Tutor..."))
-        self._input.setMaximumHeight(80)
-        text_row.addWidget(self._input, 1)
+        self._input.setPlaceholderText(translate("ChatPanel", "Ask the AI Assistant..."))
+        self._input.setMinimumHeight(56)
+        self._input.setMaximumHeight(96)
+        self._input.setMinimumWidth(180)
+        input_layout.addWidget(self._input, 1)
 
+        button_row = QHBoxLayout()
+        button_row.addStretch()
         self._send_btn = QPushButton(translate("ChatPanel", "Send (Ctrl+Enter)"))
+        self._send_btn.setMinimumWidth(126)
         self._send_btn.clicked.connect(self._send)
-        text_row.addWidget(self._send_btn)
-        input_layout.addLayout(text_row)
+        button_row.addWidget(self._send_btn)
+        input_layout.addLayout(button_row)
 
         layout.addLayout(input_layout)
 
@@ -126,8 +144,10 @@ class ChatPanel(QWidget):
     # ------------------------------------------------------------------
     def set_active_attempt(self, attempt_id: int) -> None:
         """Bind the chat panel to an attempt and reload its history."""
+        logger.info("Loading chat history: attempt_id=%s", attempt_id)
         self._active_attempt_id = attempt_id
         self._reload_history()
+        logger.info("Chat history loaded: attempt_id=%s", attempt_id)
 
     def set_active_workspace(self, workspace: BaseWorkspace | None) -> None:
         """Bind the workspace used for automatic tutor context injection."""
@@ -194,21 +214,31 @@ class ChatPanel(QWidget):
     # History rendering
     # ------------------------------------------------------------------
     def _reload_history(self) -> None:
-        # Clear existing
+        """Render the active attempt history without re-adding a widget in-loop."""
         while self._history_layout.count():
             item = self._history_layout.takeAt(0)
             w = item.widget()
-            if w:
+            if w is not None and w is not self._empty_state:
                 w.deleteLater()
 
+        self._history_layout.addWidget(self._empty_state)
+
         if self._active_attempt_id is None:
+            self._empty_state.setVisible(True)
             return
 
         rows = self._db.list_messages(self._active_attempt_id)
+        logger.info(
+            "Rendering chat history: attempt_id=%s messages=%s",
+            self._active_attempt_id,
+            len(rows),
+        )
+        self._empty_state.setVisible(not rows)
         for row in rows:
             self._append_message(row["role"], row["content"])
 
     def _append_message(self, role: str, content: str) -> None:
+        self._empty_state.setVisible(False)
         label = QLabel()
         if role == "user":
             label.setText(f"🙋 <b>You:</b><br>{content}")

@@ -6,7 +6,7 @@
   <layout class="QVBoxLayout" name="verticalLayout">
    <item>
     <widget class="QLabel" name="titleLabel">
-    <property name="text"><string>&lt;b&gt;AI Exam Tutor&lt;/b&gt;&lt;br/&gt;Wersja 1.0.0</string></property>
+    <property name="text"><string>&lt;b&gt;AI Exam Tutor&lt;/b&gt;&lt;br/&gt;Wersja 1.1.0</string></property>
     </widget>
    </item>
     <item>

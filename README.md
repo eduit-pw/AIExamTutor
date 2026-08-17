@@ -33,6 +33,13 @@ Instrukcja instalacji, konfiguracji AI i pracy z workspace INF.03 znajduje się 
 
 See `docs/adr/` for the project's published architectural decisions.
 
+## Releases
+
+Every published version must have a dated entry in the
+[CHANGELOG](CHANGELOG.md). Release tags use the `vX.Y.Z` format and the
+changelog entry must list user-visible changes, supported platforms, known
+limitations, and the downloadable artifacts.
+
 ## INF.03 workflow
 
 The reference workspace supports two PDF inputs: the exam sheet and a separate

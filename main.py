@@ -28,7 +28,7 @@ def main() -> int:
     Returns the Qt exit code.
     """
     configure_logging()
-    logger.info("AI Exam Tutor v1.0.0 starting")
+    logger.info("AI Exam Tutor v1.1.0 starting")
 
     app = QApplication(sys.argv)
     app.setApplicationName("AI Exam Tutor")

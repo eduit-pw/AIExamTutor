@@ -37,7 +37,7 @@ class SmokeTests(unittest.TestCase):
         self.assertIn("inf03", WorkspaceFactory.available())
         self.assertEqual(
             WorkspaceFactory.display_name_for("inf03"),
-            "INF.03 — SQL & PHP/HTML",
+            "INF.03 — SQL & PHP/HTML/CSS/JavaScript",
         )
 
     def test_inf03_workspace_instantiates(self) -> None:

@@ -256,3 +256,38 @@ class CssHighlighter(_SimpleHighlighter):
                     self._property_format,
                 )
             property_start = colon + 1
+
+
+class JavaScriptHighlighter(_SimpleHighlighter):
+    """JavaScript keyword and comment highlighter for the INF.03 editor."""
+
+    comment_markers = ("//", "/*")
+
+    def __init__(self, document) -> None:
+        super().__init__(
+            document,
+            (
+                "const",
+                "let",
+                "var",
+                "function",
+                "return",
+                "if",
+                "else",
+                "for",
+                "while",
+                "switch",
+                "case",
+                "break",
+                "continue",
+                "class",
+                "new",
+                "this",
+                "true",
+                "false",
+                "null",
+                "undefined",
+                "async",
+                "await",
+            ),
+        )

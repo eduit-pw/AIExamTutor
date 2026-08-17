@@ -9,6 +9,7 @@ from __future__ import annotations
 import os
 from pathlib import Path
 
+from PySide6.QtCore import Qt, QTimer
 from PySide6.QtGui import QAction, QKeySequence
 from PySide6.QtUiTools import QUiLoader
 from PySide6.QtWidgets import (
@@ -28,8 +29,9 @@ from app.core.localization import translate
 from app.core.logger import get_logger
 from app.core.theme_manager import ThemeManager
 from app.database.db_manager import DBManager
+from app.ui.startup_screen import StartupScreen
 from app.workspaces.base import BaseWorkspace
-from app.workspaces.factory import WorkspaceFactory, WorkspaceNotFoundError
+from app.workspaces.factory import WorkspaceFactory
 
 logger = get_logger("ui.main_window")
 
@@ -71,6 +73,8 @@ class MainWindow(QMainWindow):
             raise RuntimeError("QUiLoader returned None for MainWindow.ui")
 
         self.setCentralWidget(widget)
+        self.setMinimumSize(1080, 640)
+        self.resize(1120, 720)
 
         # Capture the three panes
         self._main_splitter = widget.findChild(QWidget, "mainSplitter")
@@ -88,10 +92,32 @@ class MainWindow(QMainWindow):
         ):
             raise LookupError("MainWindow.ui missing expected objectNames")
 
+        self._main_splitter.setStretchFactor(0, 1)
+        self._main_splitter.setStretchFactor(1, 2)
+        self._main_splitter.setStretchFactor(2, 1)
+        self._main_splitter.setChildrenCollapsible(False)
+        self._left_pane.setMinimumWidth(250)
+        self._center_stack.setMinimumWidth(400)
+        self._right_pane.setMinimumWidth(300)
+        self._splitter_timer = QTimer(self._main_splitter)
+        self._splitter_timer.setSingleShot(True)
+        self._splitter_timer.timeout.connect(self._set_initial_splitter_sizes)
+        self._splitter_timer.start(0)
+
         # Build the left pane (PDF viewer placeholder) now.
         self._build_left_pane()
         # Build the right pane (AI Tutor chat placeholder) now.
         self._build_right_pane()
+
+    def _set_initial_splitter_sizes(self) -> None:
+        """Set useful pane proportions while preserving each pane's minimum width."""
+        total_width = self._main_splitter.width()
+        if total_width <= 0:
+            return
+        left_width = max(250, int(total_width * 0.25))
+        right_width = max(300, int(total_width * 0.28))
+        center_width = max(400, total_width - left_width - right_width)
+        self._main_splitter.setSizes([left_width, center_width, right_width])
 
     def _build_left_pane(self) -> None:
         """Add a real PDF viewer widget to the left pane."""
@@ -100,37 +126,48 @@ class MainWindow(QMainWindow):
         layout = QVBoxLayout(self._left_pane)
         layout.setContentsMargins(0, 0, 0, 0)
         self._pdf_viewer = PDFViewer()
+        self._pdf_viewer.status_changed.connect(self._on_workspace_status)
         self._pdf_viewer.region_snipped.connect(self._on_region_snipped)
         layout.addWidget(self._pdf_viewer)
         # Keep a backwards-compatible reference
         self._pdf_label = self._pdf_viewer
 
     def _build_status_indicators(self) -> None:
-        """Add persistent PDF/key/LLM/MySQL state indicators to the status bar."""
-        for key, label in (
-            ("pdf", translate("MainWindow", "PDF")),
-            ("answer_key", translate("MainWindow", "Answer key")),
-            ("llm", translate("MainWindow", "LLM")),
-            ("mysql", translate("MainWindow", "MySQL")),
+        """Add clear file, database and AI states to the shared status bar."""
+        for key, title_source in (
+            ("file", "File"),
+            ("database", "Database"),
+            ("ai", "AI"),
         ):
+            title = translate("MainWindow", title_source)
             indicator = QLabel()
-            indicator.setObjectName("statusIndicator")
+            indicator.setObjectName(f"status{key.title()}")
             indicator.setProperty("statusIndicator", True)
-            indicator.setMinimumWidth(90 if key == "answer_key" else 65)
-            indicator.setToolTip(
-                translate("MainWindow", "%1 connection or file status").replace("%1", label)
-            )
-            indicator.setProperty("status_label", label)
+            indicator.setMinimumWidth(116)
+            indicator.setAlignment(Qt.AlignmentFlag.AlignCenter)
+            indicator.setToolTip(f"{title} status")
             self.statusBar().addPermanentWidget(indicator)
             self._status_indicators[key] = indicator
             self._set_status_indicator(key, False)
 
     def _set_status_indicator(self, key: str, ready: bool) -> None:
+        key = {
+            "connection": "database",
+            "mysql": "database",
+            "llm": "ai",
+            "pdf": "file",
+            "answer_key": "file",
+        }.get(key, key)
         indicator = self._status_indicators.get(key)
         if indicator is not None:
-            indicator.setText(
-                f"{indicator.property('status_label') or key}: {'✅' if ready else '❌'}"
+            title = translate(
+                "MainWindow",
+                {"file": "File", "database": "Database", "ai": "AI"}[key],
             )
+            state_text = translate("MainWindow", "Connected" if ready else "Offline mode")
+            indicator.setText(f"{title}: {state_text}")
+            indicator.setToolTip(f"{title}: {state_text}")
+            indicator.setVisible(True)
             indicator.setProperty("ready", ready)
             style = indicator.style()
             style.unpolish(indicator)
@@ -138,10 +175,8 @@ class MainWindow(QMainWindow):
             indicator.update()
 
     def _mark_status_indicator(self, key: str, label: str, ready: bool = True) -> None:
-        indicator = self._status_indicators.get(key)
-        if indicator is not None:
-            indicator.setProperty("status_label", label)
-            self._set_status_indicator(key, ready)
+        del label
+        self._set_status_indicator(key, ready)
 
     def _build_right_pane(self) -> None:
         """Add the AI Tutor chat panel to the right pane."""
@@ -164,6 +199,10 @@ class MainWindow(QMainWindow):
     # ------------------------------------------------------------------
     def _wire_actions(self) -> None:
         file_menu = self.menuBar().addMenu(translate("MainWindow", "File"))
+
+        choose_exam_act = QAction(translate("MainWindow", "Choose exam"), self)
+        choose_exam_act.triggered.connect(self._show_startup_screen)
+        file_menu.addAction(choose_exam_act)
 
         # File → Open PDF (Ctrl+O)
         open_act = QAction(translate("MainWindow", "Open PDF"), self)
@@ -196,7 +235,7 @@ class MainWindow(QMainWindow):
     # Persistence helpers
     # ------------------------------------------------------------------
     def _restore_last_state(self) -> None:
-        """Reopen last PDF + workspace from app_config."""
+        """Restore document context, then let the student choose a workspace."""
         last_pdf = self._db.get_config(cfg.LAST_PDF)
         if last_pdf and Path(last_pdf).exists():
             self._load_pdf(last_pdf)
@@ -209,11 +248,27 @@ class MainWindow(QMainWindow):
                     "%1", Path(answer_key).name
                 )
             )
-        last_ws = self._db.get_config(cfg.ACTIVE_WORKSPACE)
-        if last_ws in WorkspaceFactory.available():
-            self._switch_workspace(last_ws)
-        elif "inf03" in WorkspaceFactory.available():
-            self._switch_workspace("inf03")
+        self._show_startup_screen()
+
+    def _show_startup_screen(self) -> None:
+        """Show the exam selector without creating an attempt."""
+        self._clear_active_workspace()
+        self._attempt_id = None
+        self._left_pane.setVisible(False)
+        self._right_pane.setVisible(False)
+        previous_selector = getattr(self, "_startup_screen", None)
+        if previous_selector is not None:
+            self._center_stack.removeWidget(previous_selector)
+            previous_selector.deleteLater()
+        selector = StartupScreen(self)
+        selector.exam_selected.connect(self._switch_workspace)
+        self._center_stack.addWidget(selector)
+        self._center_stack.setCurrentWidget(selector)
+        self._startup_screen = selector
+        if hasattr(self, "_chat_panel"):
+            self._chat_panel.set_active_workspace(None)
+        self.statusBar().setVisible(False)
+        self.statusBar().showMessage(translate("MainWindow", "Choose an exam to begin."))
 
     # ------------------------------------------------------------------
     # PDF handling
@@ -255,35 +310,79 @@ class MainWindow(QMainWindow):
     # ------------------------------------------------------------------
     def _switch_workspace(self, workspace_id: str) -> None:
         """Create the workspace widget and push it into the centre stack."""
-        # Clean up previous workspace
-        if self._active_workspace is not None:
-            deactivate = getattr(self._active_workspace, "deactivate", None)
-            if callable(deactivate):
-                deactivate()
-            if self._active_workspace_widget is not None:
-                self._center_stack.removeWidget(self._active_workspace_widget)
-                self._active_workspace_widget.deleteLater()
-            self._active_workspace = None
-            self._active_workspace_widget = None
-
-        # If no attempt yet, create one
-        if self._attempt_id is None:
-            self._attempt_id = self._db.create_attempt(workspace_id, self._pdf_path)
-
-        try:
-            ws = WorkspaceFactory.create(workspace_id, self._attempt_id, self._db, self._llm)
-        except WorkspaceNotFoundError:
+        logger.info("Opening workspace requested: workspace_id=%s", workspace_id)
+        if workspace_id not in WorkspaceFactory.available():
+            logger.error(
+                "Workspace rejected: workspace_id=%s available=%s",
+                workspace_id,
+                WorkspaceFactory.available(),
+            )
             QMessageBox.warning(
                 self,
-                translate("MainWindow", "Workspace not available"),
-                f"{workspace_id!r} is not implemented yet.",
+                translate("MainWindow", "Exam not available"),
+                translate("MainWindow", "This exam is not available yet."),
+            )
+            return
+        if workspace_id in {"stem", "science"} and not self._llm.is_vision_capable():
+            QMessageBox.information(
+                self,
+                translate("MainWindow", "Image support required"),
+                translate(
+                    "MainWindow",
+                    "Enable image support (Vision) in File > Settings > Model "
+                    "to unlock this subject.",
+                ),
             )
             return
 
+        try:
+            # Build the new widget before removing the selector. A construction
+            # failure must leave the student with a usable screen and a log.
+            attempt_id = self._attempt_id
+            if attempt_id is None:
+                attempt_id = self._db.create_attempt(workspace_id, self._pdf_path)
+                logger.info(
+                    "Created attempt: workspace_id=%s attempt_id=%s", workspace_id, attempt_id
+                )
+
+            ws = WorkspaceFactory.create(workspace_id, attempt_id, self._db, self._llm)
+            logger.info("Workspace instance created: %s", type(ws).__name__)
+            widget = ws.build_widget()
+            logger.info("Workspace widget built: workspace_id=%s", workspace_id)
+        except Exception as exc:  # noqa: BLE001 - keep the selector usable after UI failures
+            logger.exception("Failed to open workspace: workspace_id=%s", workspace_id)
+            self.statusBar().setVisible(True)
+            self.statusBar().showMessage(
+                translate("MainWindow", "Unable to open %1")
+                .replace("%1", f"{workspace_id}: {exc}")
+            )
+            QMessageBox.critical(
+                self,
+                translate("MainWindow", "Workspace could not be opened"),
+                translate("MainWindow", "The selected exam view could not be loaded. "
+                          "See the application log for details."),
+            )
+            return
+
+        self._attempt_id = attempt_id
+        self.statusBar().setVisible(True)
+        self._left_pane.setVisible(True)
+        self._right_pane.setVisible(True)
+        startup_screen = getattr(self, "_startup_screen", None)
+        if startup_screen is not None:
+            self._center_stack.removeWidget(startup_screen)
+            startup_screen.deleteLater()
+            self._startup_screen = None
+
+        # Clean up previous workspace after the replacement was built.
+        self._clear_active_workspace()
+
         set_status_callback = getattr(ws, "set_status_callback", None)
         if callable(set_status_callback):
-            set_status_callback(self._on_mysql_connection_succeeded)
-        widget = ws.build_widget()
+            set_status_callback(self._on_workspace_status)
+        set_connection_callback = getattr(ws, "set_connection_callback", None)
+        if callable(set_connection_callback):
+            set_connection_callback(self._on_mysql_connection_succeeded)
         self._center_stack.addWidget(widget)
         self._center_stack.setCurrentWidget(widget)
         self._active_workspace = ws
@@ -292,10 +391,25 @@ class MainWindow(QMainWindow):
 
         # Bind chat panel to this attempt so it reloads history.
         if hasattr(self, "_chat_panel") and self._attempt_id is not None:
+            logger.info("Binding chat panel: attempt_id=%s", self._attempt_id)
             self._chat_panel.set_active_attempt(self._attempt_id)
             self._chat_panel.set_active_workspace(ws)
 
         self._update_vision_banner()
+        logger.info("Workspace opened successfully: workspace_id=%s", workspace_id)
+
+    def _clear_active_workspace(self) -> None:
+        """Remove the current workspace widget while keeping persisted data."""
+        if self._active_workspace is None:
+            return
+        deactivate = getattr(self._active_workspace, "deactivate", None)
+        if callable(deactivate):
+            deactivate()
+        if self._active_workspace_widget is not None:
+            self._center_stack.removeWidget(self._active_workspace_widget)
+            self._active_workspace_widget.deleteLater()
+        self._active_workspace = None
+        self._active_workspace_widget = None
 
     # ------------------------------------------------------------------
     # Settings / Theme
@@ -338,18 +452,24 @@ class MainWindow(QMainWindow):
         self._mark_status_indicator("mysql", translate("MainWindow", "MySQL"))
         self.statusBar().showMessage(message)
 
+    def _on_workspace_status(self, message: str) -> None:
+        self.statusBar().showMessage(message)
+
     def _toggle_theme(self) -> None:
         """Flip Light/Dark and reapply."""
         self._theme.toggle(QApplication.instance())
 
     def _update_vision_banner(self) -> None:
         """Show/hide the vision-warning banner based on active model."""
-        if not self._llm.is_vision_capable():
+        active_workspace_id = (
+            self._active_workspace.workspace_id if self._active_workspace is not None else None
+        )
+        if active_workspace_id in {"stem", "science"} and not self._llm.is_vision_capable():
             self.statusBar().showMessage(
                 translate(
                     "MainWindow",
-                    "Vision disabled — STEM workspaces won't work. "
-                    "Configure a vision model in Settings.",
+                    "Enable image support (Vision) in File > Settings > Model "
+                    "to unlock this subject.",
                 )
             )
         else:

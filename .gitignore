@@ -55,7 +55,7 @@ local_config.json
 
 # Private development and agent instructions
 claude.md
-spec.md
+spec*.md
 .claude/
 
 # Prompts are part of the public application behavior and remain tracked.

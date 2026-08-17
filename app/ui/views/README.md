@@ -39,3 +39,15 @@ When a `.ui` is **not yet authored**, the corresponding workspace falls back
 to a programmatically-built widget tree with the same `objectName`s. This
 lets the app run during early development and CI smoke tests without Qt
 Designer involvement. See `INF03Workspace._build_programmatic`.
+
+## Startup screen contract
+
+`StartupScreen.ui` is the first full-window view shown to the student. It uses
+three shared-width, top-aligned `QFrame` cards (`categoryCard`) for E8, Matura
+and vocational exams. The cards share a minimum height so the row remains
+balanced; the surrounding `QScrollArea` handles smaller windows. Each subject
+has one `QPushButton`. Matura entries with multiple levels share a button and
+open a level menu after activation. The button object name is
+`examButton_<entry_id>` for single-entry subjects and the shared subject id for
+multi-level Matura entries. Do not combine multiple subjects into one button or
+replace the cards with titled `QGroupBox` containers.

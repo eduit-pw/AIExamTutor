@@ -1,0 +1,136 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ui version="4.0">
+ <class>StartupScreen</class>
+ <widget class="QWidget" name="StartupScreen">
+  <property name="windowTitle"><string>Choose an exam</string></property>
+  <property name="styleSheet">
+   <string notr="true">
+QFrame[categoryCard="true"] {
+    border-radius: 14px;
+}
+QLabel[categoryTitle="true"] {
+    font-size: 15pt;
+    font-weight: 700;
+    padding: 4px 2px 6px 2px;
+}
+QLabel#titleLabel, QLabel#subtitleLabel {
+    background: transparent;
+}
+QLabel[levelBadge="true"] {
+    font-size: 9pt;
+    font-weight: 700;
+    padding: 3px 8px;
+}
+QPushButton[examEntry="true"] {
+    text-align: left;
+    min-height: 32px;
+    padding: 4px 10px;
+    font-weight: 600;
+}
+   </string>
+  </property>
+  <layout class="QVBoxLayout" name="mainLayout">
+    <property name="leftMargin"><number>24</number></property>
+    <property name="topMargin"><number>16</number></property>
+    <property name="rightMargin"><number>24</number></property>
+    <property name="bottomMargin"><number>16</number></property>
+    <property name="spacing"><number>8</number></property>
+   <item>
+    <widget class="QLabel" name="titleLabel">
+     <property name="text"><string>Choose an exam</string></property>
+     <property name="styleSheet"><string notr="true">font-size: 28pt; font-weight: 800; letter-spacing: 0px; padding-bottom: 2px;</string></property>
+     <property name="alignment"><set>Qt::AlignCenter</set></property>
+    </widget>
+   </item>
+   <item>
+    <widget class="QLabel" name="subtitleLabel">
+     <property name="text"><string>Choose a category, then select a subject.</string></property>
+     <property name="styleSheet"><string notr="true">font-size: 11pt; letter-spacing: 0px;</string></property>
+     <property name="alignment"><set>Qt::AlignCenter</set></property>
+    </widget>
+   </item>
+   <item>
+    <widget class="QScrollArea" name="categoriesScroll">
+     <property name="frameShape"><enum>QFrame::NoFrame</enum></property>
+     <property name="widgetResizable"><bool>true</bool></property>
+    <property name="horizontalScrollBarPolicy"><enum>Qt::ScrollBarAlwaysOff</enum></property>
+     <property name="verticalScrollBarPolicy"><enum>Qt::ScrollBarAsNeeded</enum></property>
+     <widget class="QWidget" name="categoriesContainer">
+      <property name="styleSheet"><string notr="true">background: transparent;</string></property>
+      <layout class="QGridLayout" name="categoriesLayout">
+       <property name="leftMargin"><number>2</number></property>
+       <property name="topMargin"><number>2</number></property>
+       <property name="rightMargin"><number>2</number></property>
+       <property name="bottomMargin"><number>2</number></property>
+       <property name="horizontalSpacing"><number>16</number></property>
+       <property name="verticalSpacing"><number>16</number></property>
+             <item row="0" column="0" alignment="Qt::AlignTop">
+        <widget class="QFrame" name="e8Card">
+                  <property name="minimumSize"><size><width>240</width><height>440</height></size></property>
+                 <property name="sizePolicy"><sizepolicy hsizetype="Expanding" vsizetype="Maximum"><horstretch>0</horstretch><verstretch>0</verstretch></sizepolicy></property>
+         <property name="categoryCard"><bool>true</bool></property>
+         <property name="frameShape"><enum>QFrame::StyledPanel</enum></property>
+         <layout class="QVBoxLayout" name="e8Layout">
+          <property name="leftMargin"><number>12</number></property>
+          <property name="topMargin"><number>12</number></property>
+          <property name="rightMargin"><number>12</number></property>
+          <property name="bottomMargin"><number>12</number></property>
+          <property name="spacing"><number>4</number></property>
+          <item><widget class="QLabel" name="e8Title"><property name="text"><string>Junior high school exam (E8)</string></property><property name="categoryTitle"><bool>true</bool></property></widget></item>
+          <item><widget class="QPushButton" name="examButton_e8_english"><property name="text"><string>English language</string></property><property name="examEntry"><bool>true</bool></property></widget></item>
+          <item><widget class="QPushButton" name="examButton_e8_polish"><property name="text"><string>Polish language</string></property><property name="examEntry"><bool>true</bool></property></widget></item>
+          <item><widget class="QPushButton" name="examButton_e8_math"><property name="text"><string>Mathematics</string></property><property name="examEntry"><bool>true</bool></property></widget></item>
+         </layout>
+        </widget>
+       </item>
+             <item row="0" column="1" alignment="Qt::AlignTop">
+        <widget class="QFrame" name="maturaCard">
+                  <property name="minimumSize"><size><width>240</width><height>440</height></size></property>
+                 <property name="sizePolicy"><sizepolicy hsizetype="Expanding" vsizetype="Maximum"><horstretch>0</horstretch><verstretch>0</verstretch></sizepolicy></property>
+         <property name="categoryCard"><bool>true</bool></property>
+         <property name="frameShape"><enum>QFrame::StyledPanel</enum></property>
+         <layout class="QVBoxLayout" name="maturaLayout">
+          <property name="leftMargin"><number>12</number></property>
+          <property name="topMargin"><number>12</number></property>
+          <property name="rightMargin"><number>12</number></property>
+          <property name="bottomMargin"><number>12</number></property>
+          <property name="spacing"><number>4</number></property>
+          <item><widget class="QLabel" name="maturaTitle"><property name="text"><string>Matura</string></property><property name="categoryTitle"><bool>true</bool></property></widget></item>
+          <item><widget class="QPushButton" name="examButton_matura_english"><property name="text"><string>English language</string></property><property name="examEntry"><bool>true</bool></property></widget></item>
+          <item><widget class="QPushButton" name="examButton_matura_polish"><property name="text"><string>Polish language</string></property><property name="examEntry"><bool>true</bool></property></widget></item>
+          <item><widget class="QPushButton" name="examButton_matura_math"><property name="text"><string>Mathematics</string></property><property name="examEntry"><bool>true</bool></property></widget></item>
+          <item><widget class="QPushButton" name="examButton_matura_history"><property name="text"><string>History</string></property><property name="examEntry"><bool>true</bool></property></widget></item>
+          <item><widget class="QPushButton" name="examButton_matura_physics"><property name="text"><string>Physics</string></property><property name="examEntry"><bool>true</bool></property></widget></item>
+          <item><widget class="QPushButton" name="examButton_matura_biology"><property name="text"><string>Biology</string></property><property name="examEntry"><bool>true</bool></property></widget></item>
+          <item><widget class="QPushButton" name="examButton_matura_geography"><property name="text"><string>Geography</string></property><property name="examEntry"><bool>true</bool></property></widget></item>
+          <item><widget class="QPushButton" name="examButton_matura_chemistry"><property name="text"><string>Chemistry</string></property><property name="examEntry"><bool>true</bool></property></widget></item>
+         </layout>
+        </widget>
+       </item>
+             <item row="0" column="2" alignment="Qt::AlignTop">
+        <widget class="QFrame" name="vocationalCard">
+                  <property name="minimumSize"><size><width>240</width><height>440</height></size></property>
+                 <property name="sizePolicy"><sizepolicy hsizetype="Expanding" vsizetype="Maximum"><horstretch>0</horstretch><verstretch>0</verstretch></sizepolicy></property>
+         <property name="categoryCard"><bool>true</bool></property>
+         <property name="frameShape"><enum>QFrame::StyledPanel</enum></property>
+         <layout class="QVBoxLayout" name="vocationalLayout">
+          <property name="leftMargin"><number>12</number></property>
+          <property name="topMargin"><number>12</number></property>
+          <property name="rightMargin"><number>12</number></property>
+          <property name="bottomMargin"><number>12</number></property>
+          <property name="spacing"><number>4</number></property>
+          <item><widget class="QLabel" name="vocationalTitle"><property name="text"><string>Vocational exams</string></property><property name="categoryTitle"><bool>true</bool></property></widget></item>
+          <item><widget class="QPushButton" name="examButton_vocational_inf03"><property name="text"><string>INF.03 — SQL and PHP/HTML/CSS/JavaScript</string></property><property name="examEntry"><bool>true</bool></property></widget></item>
+          <item><widget class="QPushButton" name="examButton_vocational_inf04"><property name="text"><string>INF.04 — Project and testing</string></property><property name="examEntry"><bool>true</bool></property></widget></item>
+         </layout>
+        </widget>
+       </item>
+      </layout>
+     </widget>
+    </widget>
+   </item>
+  </layout>
+ </widget>
+ <resources/>
+ <connections/>
+</ui>

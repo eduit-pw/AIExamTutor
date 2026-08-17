@@ -1,7 +1,7 @@
 # AI Exam Tutor - manual ucznia
 
-**Wersja manuala:** 1.0  
-**Dotyczy aplikacji:** AI Exam Tutor 1.0.0  
+**Wersja manuala:** 1.1<br>
+**Dotyczy aplikacji:** AI Exam Tutor 1.1.0<br>
 **Platforma:** Windows
 
 Ten manual opisuje korzystanie z gotowej wersji aplikacji dla ucznia przygotowującego się do egzaminu INF.03. Aplikacja pozwala otworzyć arkusz PDF, pracować nad SQL oraz kodem PHP/HTML, zadawać pytania tutorowi AI i sprawdzić rozwiązanie.
@@ -42,15 +42,29 @@ Instalator nie powinien wymagać uprawnień administratora. Domyślna nazwa prog
 
 ## 3. Pierwsze uruchomienie
 
-Po uruchomieniu zobaczysz główne okno podzielone na trzy części:
+Po uruchomieniu zobaczysz ekran wyboru egzaminu. Wybierz kategorię, a następnie
+konkretny przedmiot lub kwalifikację:
+
+| Kategoria | Przykładowe pozycje |
+|---|---|
+| Egzamin ósmoklasisty (E8) | Język angielski, Język polski, Matematyka |
+| Matura | Język angielski, Język polski i Matematyka na poziomie podstawowym lub rozszerzonym; Historia, Fizyka, Biologia, Geografia i Chemia tylko na poziomie rozszerzonym |
+| Egzaminy zawodowe | INF.03 oraz planowane INF.04 |
+
+W przypadku matury najpierw kliknij nazwę przedmiotu, a następnie wybierz poziom
+z menu. Język angielski, język polski i matematyka są dostępne na poziomie
+podstawowym oraz rozszerzonym. Pozostałe przedmioty maturalne w selektorze są
+dostępne wyłącznie na poziomie rozszerzonym.
+
+Po wybraniu dostępnej pozycji otworzy się główne okno podzielone na trzy części:
 
 | Część okna | Zastosowanie |
 |---|---|
 | Lewa | Podgląd arkusza PDF |
-| Środkowa | Środowisko egzaminacyjne, czyli SQL oraz edytory PHP/HTML |
-| Prawa | Rozmowa z `AI Tutor (sokratejski)` |
+| Środkowa | Środowisko egzaminacyjne z zakładkami SQL oraz PHP/HTML/CSS/JavaScript |
+| Prawa | Rozmowa z `AI Asystent` |
 
-Przy pierwszym uruchomieniu wykonaj te czynności w kolejności:
+Po wybraniu INF.03 wykonaj te czynności w kolejności:
 
 1. Otwórz `Plik -> Ustawienia` albo użyj skrótu `Ctrl+,`.
 2. Sprawdź, czy w polu `Język` wybrano `Polski`. Jest to ustawienie domyślne.
@@ -58,9 +72,11 @@ Przy pierwszym uruchomieniu wykonaj te czynności w kolejności:
 4. Otwórz arkusz przez `Plik -> Otwórz PDF` albo skrót `Ctrl+O`.
 5. Jeżeli chcesz oceniać zadanie, otwórz również `Plik -> Otwórz PDF z kluczem odpowiedzi`.
 6. W środkowym panelu pozostaw lub wybierz środowisko `INF.03 - SQL i PHP/HTML`.
-7. Wyślij krótkie pytanie testowe do tutora, na przykład: `Jakie wymagania powinienem sprawdzić w tym zadaniu?`.
+7. Wyślij krótkie pytanie testowe do AI Asystenta, na przykład: `Jakie wymagania powinienem sprawdzić w tym zadaniu?`.
 
-Aplikacja zapamiętuje wybrane ustawienia oraz ostatnio używane pliki. Przy kolejnym uruchomieniu spróbuje przywrócić poprzedni arkusz PDF i środowisko pracy.
+Aplikacja zapamiętuje wybrane ustawienia oraz ostatnio używane pliki. Przy
+każdym uruchomieniu możesz wybrać egzamin ponownie; aby wrócić do selektora
+w trakcie pracy, użyj polecenia `Plik -> Wybierz egzamin`.
 
 ## 4. Konfiguracja AI
 
@@ -176,15 +192,18 @@ Jeżeli aplikacja pokazuje `PyMuPDF not available`, bieżący pakiet nie ma skł
 
 ### 6.1 Rozpoczęcie pracy
 
-Po uruchomieniu środowiska INF.03 aplikacja tworzy bieżącą próbę egzaminacyjną. W środkowym panelu znajdziesz:
+Po uruchomieniu środowiska INF.03 aplikacja tworzy bieżącą próbę egzaminacyjną. W środkowym panelu znajdziesz pięć zakładek:
 
-- wybór schematu bazy danych;
-- pole `Połączenie`;
-- przyciski `Zapisz` i `Testuj`;
-- edytor SQL oraz tabelę wyników;
-- zakładki `index.php` i `index.html`;
-- zakładkę `style.css` dla arkusza stylów;
-- przyciski `Zapisz bieżący plik`, `Sprawdź zadanie` i `Uruchom w przeglądarce`.
+- `Database (SQL)` z wyborem schematu, edytorem SQL i tabelą wyników;
+- `index.php` dla kodu PHP;
+- `index.html` dla kodu HTML;
+- `style.css` dla stylów CSS;
+- `script.js` dla kodu JavaScript.
+
+Ustawienia połączenia z bazą są domyślnie zwinięte. Rozwiń `Ustawienia
+połączenia z bazą`, aby użyć pól `Zapisz` i `Testuj`. Główna akcja `Sprawdź
+zadanie` jest wyróżniona, a zapis pliku i uruchomienie podglądu pozostają
+akcjami pomocniczymi.
 
 ### 6.2 XAMPP i MySQL
 
@@ -233,22 +252,25 @@ Błąd MySQL nie oznacza błędu tutora AI. Najpierw sprawdź połączenie z lok
 Pracuj w odpowiedniej zakładce:
 
 - `index.php` dla kodu PHP;
-- `index.html` dla kodu HTML.
+- `index.html` dla kodu HTML;
 - `style.css` dla stylów CSS.
+- `script.js` dla kodu JavaScript.
 
 Szkice są automatycznie zapisywane po krótkiej przerwie w pisaniu. Dzięki temu treść może zostać odtworzona po ponownym wejściu do tej samej próby.
 
-`Zapisz bieżący plik` zapisuje aktualnie wybraną zakładkę jako plik na dysku. Jest to osobna czynność od automatycznego zapisu szkicu w bazie aplikacji. Wybierz tę opcję, gdy chcesz zachować plik w konkretnym folderze albo użyć go poza aplikacją.
+`Save file` zapisuje aktualnie wybraną zakładkę jako plik na dysku. Karta `Database (SQL)` nie jest plikiem źródłowym i nie może zostać zapisana tą akcją. Jest to osobna czynność od automatycznego zapisu szkicu w bazie aplikacji. Wybierz tę opcję, gdy chcesz zachować plik w konkretnym folderze albo użyć go poza aplikacją.
 
-`Uruchom w przeglądarce` zapisuje aktualną treść do katalogu tymczasowego i otwiera plik w domyślnej przeglądarce. Jest to szybki podgląd pliku. Nie zastępuje pełnego serwera PHP i nie uruchamia automatycznie interpretera PHP.
+`Preview` zapisuje aktualną treść do katalogu tymczasowego i otwiera plik w domyślnej przeglądarce. Jest to szybki podgląd pliku. Nie zastępuje pełnego serwera PHP i nie uruchamia automatycznie interpretera PHP.
 
 ## 7. Rozmowa z AI Tutor
 
-Panel po prawej stronie działa w trybie `AI Tutor (sokratejski)`. Tutor ma pomagać w rozumowaniu, a nie od razu podawać kompletne rozwiązanie.
+Panel po prawej stronie działa jako `AI Asystent`. W pustym panelu zobaczysz
+podpowiedź, że możesz zapytać o arkusz egzaminacyjny albo wkleić kod, z którym
+masz problem. Asystent ma pomagać w rozumowaniu, a nie od razu podawać kompletne rozwiązanie.
 
 Aby zadać pytanie:
 
-1. Wpisz pytanie w polu `Ask the AI Tutor...`.
+1. Wpisz pytanie w polu `Ask the AI Assistant...`.
 2. Kliknij `Send (Ctrl+Enter)` albo naciśnij `Ctrl+Enter`.
 3. Poczekaj na odpowiedź.
 
@@ -257,6 +279,8 @@ Do wiadomości tutora może zostać automatycznie dołączony bieżący kontekst
 - treść zapytania SQL;
 - kod PHP;
 - kod HTML;
+- kod CSS;
+- kod JavaScript;
 - wybrany schemat;
 - tekst arkusza i klucza odpowiedzi, jeżeli jest dostępny.
 
