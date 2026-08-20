@@ -17,6 +17,7 @@ from PySide6.QtWidgets import (
     QVBoxLayout,
 )
 
+from app import __version__
 from app.core.localization import LANGUAGE_ENGLISH, translate
 
 SUPPORT_URL = "https://eduit.net.pl/"
@@ -39,10 +40,12 @@ MANUAL_HTML_BY_LANGUAGE: dict[str, dict[str, str]] = {
         </ol>
         <h3>Środowisko INF.03</h3>
         <p>W środkowym panelu znajdziesz SQL, wynik zapytania oraz zakładki
-        <b>index.php</b>, <b>index.html</b> i <b>style.css</b>. Szkice są automatycznie
+        <b>index.php</b>, <b>index.html</b>, <b>style.css</b> i <b>script.js</b>.
+        Szkice są automatycznie
         zapisywane. <b>Zapisz bieżący plik</b> zapisuje plik na dysku, a
         <b>Uruchom w przeglądarce</b> pokazuje podgląd HTML/CSS. SQL uruchomisz przez
-        <b>Uruchom SQL</b> lub <b>Ctrl+Enter</b>.</p>
+        <b>Uruchom SQL</b> lub <b>Ctrl+Enter</b>. Bieżący plik wyślesz do tutora przez
+        <b>Wyślij do czatu</b>.</p>
         <h3>PDF i tutor</h3>
         <p>Lewy panel pokazuje arkusz. Użyj <b>Zaznacz fragment</b>, aby wysłać tutorowi
         fragment strony. Tutor AI pomaga rozumować i sprawdzać wymagania, zamiast
@@ -81,9 +84,11 @@ MANUAL_HTML_BY_LANGUAGE: dict[str, dict[str, str]] = {
         </ol>
         <h3>INF.03 workspace</h3>
         <p>The center panel contains SQL, query results, and the <b>index.php</b>,
-        <b>index.html</b>, and <b>style.css</b> tabs. Drafts are saved automatically.
+        <b>index.html</b>, <b>style.css</b>, and <b>script.js</b> tabs. Drafts are
+        saved automatically.
         <b>Save current file</b> writes a file to disk, while <b>Run in browser</b>
-        previews HTML/CSS. Run SQL with <b>Run SQL</b> or <b>Ctrl+Enter</b>.</p>
+        previews HTML/CSS. Run SQL with <b>Run SQL</b> or <b>Ctrl+Enter</b>. Send the
+        active file to the tutor with <b>Send to chat</b>.</p>
         <h3>PDF and tutor</h3>
         <p>The left panel displays the exam sheet. Use <b>Snip Region</b> to send
         a page fragment to the tutor. The tutor supports reasoning and requirement
@@ -145,7 +150,11 @@ class AboutDialog(QDialog):
         if close_button is not None:
             close_button.setText(translate("AboutDialog", "Close"))
         if title_label is not None:
-            title_label.setText(translate("AboutDialog", "<b>AI Exam Tutor</b><br/>Version 1.2.0"))
+            title_label.setText(
+                translate("AboutDialog", "<b>AI Exam Tutor</b><br/>Version %1").replace(
+                    "%1", __version__
+                )
+            )
         support_label.setText(
             translate(
                 "AboutDialog",

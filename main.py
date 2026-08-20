@@ -13,6 +13,7 @@ from importlib import resources
 from PySide6.QtGui import QIcon
 from PySide6.QtWidgets import QApplication
 
+from app import __version__
 from app.core.localization import LanguageManager
 from app.core.logger import configure_logging, get_logger
 from app.core.theme_manager import ThemeManager
@@ -28,7 +29,7 @@ def main() -> int:
     Returns the Qt exit code.
     """
     configure_logging()
-    logger.info("AI Exam Tutor v1.2.0 starting")
+    logger.info("AI Exam Tutor v%s starting", __version__)
 
     app = QApplication(sys.argv)
     app.setApplicationName("AI Exam Tutor")

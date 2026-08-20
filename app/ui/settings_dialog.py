@@ -74,6 +74,31 @@ class _ConnectionTestWorker(QThread):
             self.failed.emit(str(exc))
 
 
+class _ModelFetchWorker(QThread):
+    """Fetch provider models without blocking the settings dialog."""
+
+    succeeded = Signal(list)
+    failed = Signal(str)
+
+    def __init__(self, llm: LLMClient, provider: str, api_key: str, base_url: str) -> None:
+        super().__init__()
+        self._llm = llm
+        self._provider = provider
+        self._api_key = api_key
+        self._base_url = base_url
+
+    def run(self) -> None:
+        try:
+            models = self._llm.fetch_available_models(
+                self._provider,
+                self._api_key,
+                self._base_url,
+            )
+            self.succeeded.emit(models)
+        except Exception as exc:  # noqa: BLE001
+            self.failed.emit(str(exc))
+
+
 class SettingsDialog(QDialog):
     """Edit the active provider and its persisted connection settings."""
 
@@ -84,8 +109,10 @@ class SettingsDialog(QDialog):
         self._db = db
         self._llm = llm
         self._test_worker: _ConnectionTestWorker | None = None
+        self._model_fetch_worker: _ModelFetchWorker | None = None
         self._load_ui()
         self._provider_combo.currentIndexChanged.connect(self._provider_changed)
+        self._refresh_models_button.clicked.connect(self._refresh_models)
         self._test_connection_button.clicked.connect(self._test_connection)
         self._button_box.accepted.connect(self._save)
         self._button_box.rejected.connect(self.reject)
@@ -105,6 +132,7 @@ class SettingsDialog(QDialog):
         self._api_key = widget.findChild(QLineEdit, "apiKeyLineEdit")
         self._base_url = widget.findChild(QLineEdit, "baseUrlLineEdit")
         self._language_combo = widget.findChild(QComboBox, "languageComboBox")
+        self._refresh_models_button = widget.findChild(QPushButton, "refreshModelsButton")
         self._test_connection_button = widget.findChild(QPushButton, "testConnectionButton")
         self._button_box = widget.findChild(QDialogButtonBox, "buttonBox")
         if any(
@@ -115,6 +143,7 @@ class SettingsDialog(QDialog):
                 self._api_key,
                 self._base_url,
                 self._language_combo,
+                self._refresh_models_button,
                 self._test_connection_button,
                 self._button_box,
             )
@@ -144,6 +173,9 @@ class SettingsDialog(QDialog):
         if cancel_button is not None:
             cancel_button.setText(translate("SettingsDialog", "Cancel"))
         self._test_connection_button.setText(translate("SettingsDialog", "Test connection"))
+        self._refresh_models_button.setText(
+            translate("SettingsDialog", "Fetch available models")
+        )
 
     def _load_values(self) -> None:
         self._provider_combo.clear()
@@ -212,6 +244,64 @@ class SettingsDialog(QDialog):
         self._db.set_config(cfg.api_key_key(provider), self._api_key.text())
         self._db.set_config(cfg.base_url_key(provider), base_url)
 
+    def _refresh_models(self) -> None:
+        """Fetch the current provider model list and merge it into the combo."""
+        if self._model_fetch_worker is not None:
+            return
+        provider = self._provider_combo.currentData()
+        base_url = self._base_url.text().strip()
+        if not base_url:
+            QMessageBox.warning(
+                self,
+                translate("SettingsDialog", "Incomplete settings"),
+                translate("SettingsDialog", "Provide a base URL before fetching models."),
+            )
+            return
+
+        self._refresh_models_button.setEnabled(False)
+        self._refresh_models_button.setText(translate("SettingsDialog", "Fetching..."))
+        self._model_fetch_worker = _ModelFetchWorker(
+            self._llm,
+            provider,
+            self._api_key.text().strip(),
+            base_url,
+        )
+        self._model_fetch_worker.succeeded.connect(self._models_fetched)
+        self._model_fetch_worker.failed.connect(self._models_fetch_failed)
+        self._model_fetch_worker.finished.connect(self._models_fetch_finished)
+        self._model_fetch_worker.start()
+
+    def _models_fetched(self, models: list[str]) -> None:
+        """Replace the provider list while preserving the current selection."""
+        current = self._model_combo.currentText().strip()
+        if not models:
+            QMessageBox.information(
+                self,
+                translate("SettingsDialog", "No models found"),
+                translate("SettingsDialog", "The provider returned no available models."),
+            )
+            return
+        self._model_combo.clear()
+        self._model_combo.addItems(models)
+        if current:
+            self._model_combo.setCurrentText(current)
+
+    def _models_fetch_failed(self, error: str) -> None:
+        QMessageBox.warning(
+            self,
+            translate("SettingsDialog", "Model fetch failed"),
+            translate("SettingsDialog", "The provider did not return models: %1").replace(
+                "%1", error
+            ),
+        )
+
+    def _models_fetch_finished(self) -> None:
+        self._model_fetch_worker = None
+        self._refresh_models_button.setEnabled(True)
+        self._refresh_models_button.setText(
+            translate("SettingsDialog", "Fetch available models")
+        )
+
     def _test_connection(self) -> None:
         """Send a minimal request using the current, unsaved form values."""
         if self._test_worker is not None:
@@ -245,12 +335,10 @@ class SettingsDialog(QDialog):
 
     def _test_succeeded(self, reply: str) -> None:
         self.connection_succeeded.emit(self._provider_combo.currentText())
-        preview = " ".join(reply.strip().split())[:120]
         QMessageBox.information(
             self,
             translate("SettingsDialog", "Connection successful"),
-            translate("SettingsDialog", "The API responded successfully.")
-            + (f"\n\n{preview}" if preview else ""),
+            translate("SettingsDialog", "The API responded successfully."),
         )
 
     def _test_failed(self, error: str) -> None:

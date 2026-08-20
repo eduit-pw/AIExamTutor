@@ -92,12 +92,77 @@ class LLMClientOpenAICompatTests(unittest.TestCase):
         # --- ASSERT ---
         self.assertEqual(reply, "Hello back!")
 
-    def test_chat_uses_reasoning_text_when_content_is_empty(self) -> None:
+    def test_chat_merges_system_messages_into_one_leading_message(self) -> None:
         """
-        Scenario: Local OpenAI-compatible model puts its answer in reasoning_content
+        Scenario: Strict local chat templates accept only one leading system message
+        Given: a conversation contains separate tutor and workspace system messages
+        When:  chat() is called through an OpenAI-compatible provider
+        Then:  the request contains one leading system message with both prompts
+        """
+        # --- ARRANGE ---
+        seen_messages: list[dict[str, Any]] = []
+
+        def _capture_poster(
+            url: str, headers: dict[str, str], body: dict[str, Any]
+        ) -> dict[str, Any]:
+            seen_messages.extend(body["messages"])
+            return {"choices": [{"message": {"content": "ok"}}]}
+
+        db = DBManager(":memory:")
+        db.set_config(cfg.ACTIVE_PROVIDER, cfg.PROVIDER_LMSTUDIO)
+        db.set_config(cfg.model_key(cfg.PROVIDER_LMSTUDIO), "local-model")
+        client = LLMClient(db, http_poster=_capture_poster)
+
+        # --- ACT ---
+        client.chat(
+            [
+                {"role": "system", "content": "Tutor prompt"},
+                {"role": "system", "content": "Workspace context"},
+                {"role": "user", "content": "Sprawdz czy jest dobrze"},
+            ]
+        )
+
+        # --- ASSERT ---
+        self.assertEqual(seen_messages[0]["role"], "system")
+        self.assertEqual(seen_messages[0]["content"], "Tutor prompt\n\nWorkspace context")
+        self.assertEqual([message["role"] for message in seen_messages], ["system", "user"])
+
+    def test_lmstudio_disables_thinking_mode(self) -> None:
+        """
+        Scenario: LM Studio returns an answer instead of spending the whole limit on reasoning
+        Given: the active provider is LM Studio
+        When:  chat() is called
+        Then:  the request disables Qwen thinking mode in the chat template
+        """
+        # --- ARRANGE ---
+        seen_body: dict[str, Any] = {}
+
+        def _capture_poster(
+            url: str, headers: dict[str, str], body: dict[str, Any]
+        ) -> dict[str, Any]:
+            seen_body.update(body)
+            return {"choices": [{"message": {"content": "Gotowa odpowiedz"}}]}
+
+        db = DBManager(":memory:")
+        db.set_config(cfg.ACTIVE_PROVIDER, cfg.PROVIDER_LMSTUDIO)
+        db.set_config(cfg.model_key(cfg.PROVIDER_LMSTUDIO), "local-model")
+        client = LLMClient(db, http_poster=_capture_poster)
+
+        # --- ACT ---
+        reply = client.chat([{"role": "user", "content": "Sprawdz czy jest dobrze"}])
+
+        # --- ASSERT ---
+        self.assertEqual(reply, "Gotowa odpowiedz")
+        self.assertEqual(
+            seen_body["chat_template_kwargs"], {"enable_thinking": False}
+        )
+
+    def test_chat_does_not_expose_reasoning_when_content_is_empty(self) -> None:
+        """
+        Scenario: Local OpenAI-compatible model returns reasoning without an answer
         Given: a response with empty content and non-empty reasoning_content
         When:  chat() is called
-        Then:  the available reasoning text is returned instead of failing as empty
+        Then:  LLMError is raised without exposing the internal reasoning
         """
         # --- ARRANGE ---
         db = DBManager(":memory:")
@@ -116,10 +181,9 @@ class LLMClientOpenAICompatTests(unittest.TestCase):
                 ]
             },
         )
-        # --- ACT ---
-        reply = client.chat([{"role": "user", "content": "Hello"}])
-        # --- ASSERT ---
-        self.assertEqual(reply, "Hello from local model")
+        # --- ACT / ASSERT ---
+        with self.assertRaisesRegex(LLMError, "reasoning without a final answer"):
+            client.chat([{"role": "user", "content": "Hello"}])
 
     def test_chat_raises_on_no_active_provider(self) -> None:
         """

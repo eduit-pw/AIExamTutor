@@ -15,7 +15,9 @@ Design notes:
 from __future__ import annotations
 
 import base64
+import html
 import json
+import re
 from typing import Any
 from urllib.error import HTTPError, URLError
 from urllib.request import Request, urlopen
@@ -25,6 +27,9 @@ from app.core.logger import get_logger
 from app.database.db_manager import DBManager
 
 logger = get_logger("llm_client")
+HTTP_TIMEOUT_SECONDS = 180
+CONNECTION_TEST_MAX_TOKENS = 64
+LOCAL_MAX_OUTPUT_TOKENS = 2048
 
 
 class LLMError(RuntimeError):
@@ -45,6 +50,48 @@ class LLMClient:
     custom `HttpPoster` and you can assert routing decisions without a network.
     """
 
+    @staticmethod
+    def sanitize_prompt_text(value: str) -> str:
+        """Normalize user-supplied text to a safe, plain-text form.
+
+        This strips HTML/script payloads, neutralizes control characters, and
+        reduces prompt injection risk before a message reaches the model or the
+        UI rendering layer.
+        """
+        text = str(value or "")
+        text = text.replace("\x00", "")
+        text = re.sub(r"[\x00-\x08\x0B\x0C\x0E-\x1F\x7F]", "", text)
+        text = html.unescape(text)
+        text = re.sub(r"(?is)<script.*?>.*?</script>", " ", text)
+        text = re.sub(r"(?is)<style.*?>.*?</style>", " ", text)
+        text = re.sub(r"(?is)<[^>]+>", " ", text)
+        text = html.escape(text, quote=False)
+        return " ".join(text.split())
+
+    @classmethod
+    def sanitize_messages(cls, messages: list[dict[str, Any]]) -> list[dict[str, Any]]:
+        """Return a defensive copy of prompt messages with plain-text content."""
+        sanitized: list[dict[str, Any]] = []
+        for message in messages:
+            if not isinstance(message, dict):
+                continue
+            updated = dict(message)
+            content = updated.get("content")
+            if isinstance(content, list):
+                cleaned_parts: list[dict[str, Any]] = []
+                for part in content:
+                    if not isinstance(part, dict):
+                        continue
+                    cleaned = dict(part)
+                    if "text" in cleaned and isinstance(cleaned["text"], str):
+                        cleaned["text"] = cls.sanitize_prompt_text(cleaned["text"])
+                    cleaned_parts.append(cleaned)
+                updated["content"] = cleaned_parts
+            elif isinstance(content, str):
+                updated["content"] = cls.sanitize_prompt_text(content)
+            sanitized.append(updated)
+        return sanitized
+
     # OpenAI-compatible default base URLs. Overridden by `base_url_<provider>`.
     DEFAULT_BASE_URLS: dict[str, str] = {
         cfg.PROVIDER_OPENAI: "https://api.openai.com/v1",
@@ -57,12 +104,25 @@ class LLMClient:
         cfg.PROVIDER_CUSTOM: "",  # user must supply base_url_custom
     }
 
-    def __init__(self, db: DBManager, http_poster: Any | None = None) -> None:
-        """Store db + optional http_poster (overridable for tests)."""
+    def __init__(
+        self,
+        db: DBManager,
+        http_poster: Any | None = None,
+        http_getter: Any | None = None,
+    ) -> None:
+        """Store db + optional http overrides (overridable for tests)."""
         self._db = db
         # Default poster is the module-level _post_json below; tests inject
         # a stub that returns canned responses without touching the network.
         self._http_poster = http_poster or _post_json
+        if http_getter is not None:
+            self._http_getter = http_getter
+        elif http_poster is not None:
+            # Keep custom test transports self-contained while preserving the
+            # two-argument GET transport contract.
+            self._http_getter = lambda url, headers: http_poster(url, headers, {})
+        else:
+            self._http_getter = _get_json
 
     # ------------------------------------------------------------------
     # Provider routing helpers
@@ -147,6 +207,7 @@ class LLMClient:
         base_url: str | None,
         messages: list[dict[str, Any]],
         images: list[bytes] | None = None,
+        max_tokens: int | None = None,
     ) -> str:
         """Send chat using settings already read by the caller's thread."""
         if provider is None:
@@ -155,11 +216,61 @@ class LLMClient:
             raise LLMError(f"No base URL configured for provider {provider!r}.")
         if not model:
             raise LLMError("No model configured.")
+        safe_messages = self.sanitize_messages(messages)
+        if max_tokens is None and provider in {
+            cfg.PROVIDER_LMSTUDIO,
+            cfg.PROVIDER_OLLAMA,
+            cfg.PROVIDER_OMNIROUTE,
+        }:
+            max_tokens = LOCAL_MAX_OUTPUT_TOKENS
         # Route to provider-specific implementation
         if provider == cfg.PROVIDER_GEMINI:
-            return self._chat_gemini(base_url, api_key, model, messages, images)
+            return self._chat_gemini(
+                base_url, api_key, model, safe_messages, images, max_tokens
+            )
+        return self._chat_openai_compatible(
+            provider, base_url, api_key, model, safe_messages, images, max_tokens
+        )
+
+    def fetch_available_models(
+        self,
+        provider: str,
+        api_key: str = "",
+        base_url: str | None = None,
+    ) -> list[str]:
+        """Return a list of model IDs for an OpenAI-compatible provider."""
+        url = (base_url or self._base_url_for(provider)).rstrip("/")
+        if not url:
+            return []
+
+        headers = {"Content-Type": "application/json"}
+        if api_key:
+            headers["Authorization"] = f"Bearer {api_key}"
+
+        if provider == cfg.PROVIDER_GEMINI:
+            url = f"{url}/models"
+            if api_key:
+                url = f"{url}?key={api_key}"
+            payload = self._http_getter(url, headers)
         else:
-            return self._chat_openai_compatible(base_url, api_key, model, messages, images)
+            payload = self._http_getter(f"{url}/models", headers)
+
+        items: list[Any]
+        if isinstance(payload, dict):
+            items = payload.get("data") or payload.get("models") or []
+        else:
+            items = []
+
+        models: list[str] = []
+        for item in items:
+            if not isinstance(item, dict):
+                continue
+            model_id = item.get("id") or item.get("name")
+            if isinstance(model_id, str):
+                name = model_id.split("/", 1)[-1] if "/" in model_id else model_id
+                if name and name not in models:
+                    models.append(name)
+        return models
 
     def test_connection(
         self,
@@ -170,23 +281,39 @@ class LLMClient:
     ) -> str:
         """Send a minimal request using explicit settings, without DB access."""
         messages = [{"role": "user", "content": "Reply with exactly: OK"}]
-        return self.chat_with_settings(provider, model, api_key, base_url, messages, None)
+        return self.chat_with_settings(
+            provider,
+            model,
+            api_key,
+            base_url,
+            messages,
+            None,
+            CONNECTION_TEST_MAX_TOKENS,
+        )
 
     def _chat_openai_compatible(
         self,
+        provider: str,
         base_url: str,
         api_key: str,
         model: str,
         messages: list[dict[str, Any]],
         images: list[bytes] | None,
+        max_tokens: int | None = None,
     ) -> str:
         """Handle OpenAI-compatible endpoints (OpenAI, Groq, OpenRouter, local)."""
-        payload_messages = self._maybe_attach_images(messages, images)
+        payload_messages = self._maybe_attach_images(
+            self._merge_system_messages(messages), images
+        )
         body = {
             "model": model,
             "messages": payload_messages,
             "temperature": 0.4,
         }
+        if max_tokens is not None:
+            body["max_tokens"] = max_tokens
+        if provider == cfg.PROVIDER_LMSTUDIO:
+            body["chat_template_kwargs"] = {"enable_thinking": False}
 
         url = f"{base_url.rstrip('/')}/chat/completions"
         headers = {"Content-Type": "application/json"}
@@ -195,7 +322,11 @@ class LLMClient:
 
         try:
             response = self._http_poster(url, headers, body)
-        except (HTTPError, URLError, TimeoutError) as exc:
+        except HTTPError as exc:
+            details = _http_error_details(exc)
+            logger.error("LLM request rejected: HTTP %s %s", exc.code, details)
+            raise LLMError(f"Provider returned HTTP {exc.code}: {details}") from exc
+        except (URLError, TimeoutError) as exc:
             logger.exception("LLM request failed")
             raise LLMError(f"Network error talking to provider: {exc}") from exc
         except json.JSONDecodeError as exc:
@@ -206,6 +337,34 @@ class LLMClient:
         except (KeyError, IndexError, TypeError) as exc:
             raise LLMError(f"Unexpected response schema: {exc}") from exc
 
+    @staticmethod
+    def _merge_system_messages(messages: list[dict[str, Any]]) -> list[dict[str, Any]]:
+        """Combine system prompts into one leading message for strict templates."""
+        system_parts: list[str] = []
+        conversation: list[dict[str, Any]] = []
+        for message in messages:
+            if message.get("role") != "system":
+                conversation.append(message)
+                continue
+            content = message.get("content", "")
+            if isinstance(content, str):
+                system_parts.append(content)
+            elif isinstance(content, list):
+                system_parts.extend(
+                    part.get("text", "")
+                    for part in content
+                    if isinstance(part, dict) and isinstance(part.get("text"), str)
+                )
+            else:
+                system_parts.append(str(content))
+
+        if not system_parts:
+            return conversation
+        return [
+            {"role": "system", "content": "\n\n".join(system_parts)},
+            *conversation,
+        ]
+
     def _chat_gemini(
         self,
         base_url: str,
@@ -213,6 +372,7 @@ class LLMClient:
         model: str,
         messages: list[dict[str, Any]],
         images: list[bytes] | None,
+        max_tokens: int | None = None,
     ) -> str:
         """Handle Google Gemini native API format.
 
@@ -225,7 +385,7 @@ class LLMClient:
             "contents": contents,
             "generationConfig": {
                 "temperature": 0.4,
-                "maxOutputTokens": 4096,
+                "maxOutputTokens": max_tokens or 4096,
             },
         }
 
@@ -236,7 +396,11 @@ class LLMClient:
 
         try:
             response = self._http_poster(url, headers, body)
-        except (HTTPError, URLError, TimeoutError) as exc:
+        except HTTPError as exc:
+            details = _http_error_details(exc)
+            logger.error("Gemini request rejected: HTTP %s %s", exc.code, details)
+            raise LLMError(f"Provider returned HTTP {exc.code}: {details}") from exc
+        except (URLError, TimeoutError) as exc:
             logger.exception("Gemini request failed")
             raise LLMError(f"Network error talking to Gemini: {exc}") from exc
         except json.JSONDecodeError as exc:
@@ -398,15 +562,25 @@ class LLMClient:
         content = message.get("content") or ""
         if content.strip():
             return content
-        reasoning = message.get("reasoning_content") or ""
-        if reasoning.strip():
-            return reasoning
+        if (message.get("reasoning_content") or "").strip():
+            raise LLMError(
+                "Provider returned reasoning without a final answer. "
+                "Thinking mode may still be enabled for this model."
+            )
         raise KeyError("Assistant response contains no text")
 
 
 # ----------------------------------------------------------------------
 # Module-level networking — overridable via LLMClient(http_poster=...)
 # ----------------------------------------------------------------------
+def _get_json(url: str, headers: dict[str, str]) -> dict[str, Any]:
+    """Issue a GET request and parse JSON without mutating provider settings."""
+    request = Request(url, headers=headers, method="GET")
+    with urlopen(request, timeout=HTTP_TIMEOUT_SECONDS) as response:  # noqa: S310
+        raw = response.read().decode("utf-8")
+    return json.loads(raw)
+
+
 def _post_json(url: str, headers: dict[str, str], body: dict[str, Any]) -> dict[str, Any]:
     """POST `body` (JSON) to `url` with `headers`, return the parsed JSON dict.
 
@@ -415,6 +589,15 @@ def _post_json(url: str, headers: dict[str, str], body: dict[str, Any]) -> dict[
     """
     data = json.dumps(body).encode("utf-8")
     request = Request(url, data=data, headers=headers, method="POST")
-    with urlopen(request, timeout=120) as response:  # noqa: S310 — URL is provider-config
+    with urlopen(request, timeout=HTTP_TIMEOUT_SECONDS) as response:  # noqa: S310 — URL is provider-config
         raw = response.read().decode("utf-8")
     return json.loads(raw)
+
+
+def _http_error_details(error: HTTPError) -> str:
+    """Read a bounded provider error body without masking the original error."""
+    try:
+        raw = error.read().decode("utf-8", errors="replace").strip()
+    except Exception:  # noqa: BLE001
+        raw = ""
+    return raw[:500] or str(error.reason or "No response details")

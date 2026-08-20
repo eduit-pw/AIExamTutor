@@ -7,11 +7,11 @@ Supports image attachments from the PDF viewer's region snip.
 
 from __future__ import annotations
 
+import html
 import json
 from pathlib import Path
 
 from PySide6.QtCore import Qt, QThread, Signal
-from PySide6.QtGui import QKeySequence, QShortcut
 from PySide6.QtWidgets import (
     QHBoxLayout,
     QLabel,
@@ -79,6 +79,7 @@ class ChatPanel(QWidget):
         self._active_attempt_id: int | None = None
         self._active_workspace: BaseWorkspace | None = None
         self._pending_images: list[bytes] = []
+        self._worker: _ChatWorker | None = None
 
         self._build_ui()
 
@@ -129,7 +130,7 @@ class ChatPanel(QWidget):
         input_layout.addWidget(self._input, 1)
 
         button_row = QHBoxLayout()
-        self._send_btn = QPushButton(translate("ChatPanel", "Send (Ctrl+Enter)"))
+        self._send_btn = QPushButton(translate("ChatPanel", "Send"))
         self._send_btn.setMinimumHeight(34)
         self._send_btn.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Fixed)
         self._send_btn.clicked.connect(self._send)
@@ -137,9 +138,6 @@ class ChatPanel(QWidget):
         input_layout.addLayout(button_row)
 
         layout.addLayout(input_layout)
-
-        # Shortcuts
-        QShortcut(QKeySequence("Ctrl+Return"), self, activated=self._send)
 
     # ------------------------------------------------------------------
     # Public API
@@ -178,22 +176,25 @@ class ChatPanel(QWidget):
         attempt_id = self._active_attempt_id
 
         # Save user message
-        self._db.add_message(attempt_id, "user", text)
-        self._append_message("user", text)
+        safe_text = LLMClient.sanitize_prompt_text(text)
+        self._db.add_message(attempt_id, "user", safe_text)
+        self._append_message("user", safe_text)
         self._input.clear()
 
-        # Build messages with workspace context
-        messages = self._build_context_messages(attempt_id, text)
+        messages = self._build_context_messages(attempt_id, safe_text)
         images = list(self._pending_images)
         self._pending_images.clear()
         self._attachment_label.setText("")
 
-        # Disable send button while waiting
         self._send_btn.setEnabled(False)
         self._send_btn.setText(translate("ChatPanel", "Thinking..."))
 
-        # Spin up background worker
-        self._worker = _ChatWorker(self._llm, self._llm.connection_settings(), messages, images)
+        self._worker = _ChatWorker(
+            self._llm,
+            self._llm.connection_settings(),
+            messages,
+            images,
+        )
         self._worker.finished_ok.connect(self._on_reply)
         self._worker.finished_err.connect(self._on_error)
         self._worker.finished.connect(self._on_worker_done)
@@ -209,8 +210,13 @@ class ChatPanel(QWidget):
 
     def _on_worker_done(self) -> None:
         self._send_btn.setEnabled(True)
-        self._send_btn.setText(translate("ChatPanel", "Send (Ctrl+Enter)"))
+        self._send_btn.setText(translate("ChatPanel", "Send"))
         self._worker = None
+
+    def has_running_worker(self) -> bool:
+        """Return whether a provider request is still running."""
+        worker = getattr(self, "_worker", None)
+        return worker is not None and worker.isRunning()
 
     # ------------------------------------------------------------------
     # History rendering
@@ -241,21 +247,22 @@ class ChatPanel(QWidget):
 
     def _append_message(self, role: str, content: str) -> None:
         self._empty_state.setVisible(False)
+        safe_content = html.escape(LLMClient.sanitize_prompt_text(content))
         label = QLabel()
         if role == "user":
-            label.setText(f"🙋 <b>You:</b><br>{content}")
+            label.setText(f"🙋 <b>You:</b><br>{safe_content}")
             label.setStyleSheet(
                 "background-color: #007aff; color: white; padding: 8px; "
                 "border-radius: 8px; margin: 4px;"
             )
         elif role == "assistant":
-            label.setText(f"🤖 <b>Tutor:</b><br>{content}")
+            label.setText(f"🤖 <b>Tutor:</b><br>{safe_content}")
             label.setStyleSheet(
                 "background-color: #34c759; color: white; padding: 8px; "
                 "border-radius: 8px; margin: 4px;"
             )
         else:
-            label.setText(f"ℹ️ {content}")
+            label.setText(f"ℹ️ {safe_content}")
             label.setStyleSheet(
                 "background-color: #8e8e93; color: white; padding: 8px; "
                 "border-radius: 8px; margin: 4px;"
@@ -279,7 +286,9 @@ class ChatPanel(QWidget):
         if self._active_workspace is not None:
             prompt = self._active_workspace.tutor_system_prompt()
             context = self._active_workspace.build_context_payload()
-            context.setdefault("exam_pdf", self._db.get_config(cfg.LAST_PDF, "") or "")
+            exam_path = self._db.get_config(cfg.LAST_PDF, "") or ""
+            context.setdefault("exam_pdf", exam_path)
+            context.setdefault("exam_sheet_text", self._read_pdf_text(exam_path))
             answer_key_path = self._db.get_config(cfg.ANSWER_KEY_PDF, "") or ""
             context.setdefault("answer_key_pdf", answer_key_path)
             context.setdefault("answer_key_text", self._read_pdf_text(answer_key_path))

@@ -58,6 +58,16 @@ class BaseWorkspace(ABC):
             "You are a helpful exam tutor. Guide the student without giving away the final answer."
         )
 
+    def set_chat_callback(self, callback) -> None:
+        """Register a callback that can forward a user message into the main chat panel."""
+        self._chat_callback = callback
+
+    def send_to_chat(self, content: str) -> None:
+        """Forward text to the active chat panel when one is available."""
+        callback = getattr(self, "_chat_callback", None)
+        if callable(callback):
+            callback(content)
+
     @abstractmethod
     def grade(self) -> dict[str, Any]:
         """Return the validated score report for the current attempt.

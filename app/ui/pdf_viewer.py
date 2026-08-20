@@ -34,11 +34,13 @@ class PDFViewer(QWidget):
     """Scrollable PDF viewer with page selector, zoom, and snip-to-Vision."""
 
     status_changed = Signal(str)
+    pdf_loaded = Signal(str)
     # Emitted when user finishes a snip region (returns PNG bytes)
     region_snipped = Signal(bytes)
 
     def __init__(self, parent: QWidget | None = None) -> None:
         super().__init__(parent)
+        self.setAcceptDrops(True)
         self._doc: fitz.Document | None = None
         self._current_page = 0
         self._zoom_factor = 2.0  # 2.0 ≈ 300 DPI on typical 96 DPI screens
@@ -139,6 +141,7 @@ class PDFViewer(QWidget):
                 .replace("%1", Path(path).name)
                 .replace("%2", str(self._doc.page_count))
             )
+            self.pdf_loaded.emit(path)
             return True
         except Exception as exc:  # noqa: BLE001
             self._set_status(
@@ -190,6 +193,25 @@ class PDFViewer(QWidget):
         self._snipping = True
         self._image_label.setCursor(Qt.CursorShape.CrossCursor)
         self._set_status(translate("PDFViewer", "Drag to select region... (Esc to cancel)"))
+
+    def dragEnterEvent(self, event) -> None:  # noqa: D102
+        if event.mimeData().hasUrls():
+            for url in event.mimeData().urls():
+                if url.isLocalFile() and url.toLocalFile().lower().endswith(".pdf"):
+                    event.acceptProposedAction()
+                    return
+        super().dragEnterEvent(event)
+
+    def dropEvent(self, event) -> None:  # noqa: D102
+        if event.mimeData().hasUrls():
+            for url in event.mimeData().urls():
+                if url.isLocalFile():
+                    path = url.toLocalFile()
+                    if path.lower().endswith(".pdf"):
+                        self.load_pdf(path)
+                        event.acceptProposedAction()
+                        return
+        super().dropEvent(event)
 
     def eventFilter(self, obj, event) -> bool:  # noqa: D102
         if obj is self._image_label and self._snipping:

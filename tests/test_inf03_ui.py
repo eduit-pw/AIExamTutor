@@ -1,6 +1,7 @@
 """UI contract tests for the INF.03 workspace and AI assistant panel."""
 
 import os
+import tempfile
 import unittest
 from unittest.mock import patch
 
@@ -162,7 +163,40 @@ class INF03UiTests(unittest.TestCase):
         self.assertGreaterEqual(minimum_width, 300)
         window.close()
 
-    def test_startup_hides_status_bar_but_keeps_three_status_segments(self) -> None:
+    def test_viewer_pdf_load_updates_persisted_path_and_file_status(self) -> None:
+        """
+        Scenario: loading a PDF through the viewer updates the shared file state
+        Given: a MainWindow and a valid PDF loaded directly by its PDFViewer
+        When:  the viewer finishes loading the PDF
+        Then:  LAST_PDF is persisted and the File indicator is ready
+        """
+        # --- ARRANGE ---
+        import fitz
+
+        db = DBManager(":memory:")
+        window = MainWindow(db, ThemeManager(db))
+        handle, path = tempfile.mkstemp(suffix=".pdf")
+        os.close(handle)
+        document = fitz.open()
+        document.new_page()
+        document.save(path)
+        document.close()
+        try:
+            # --- ACT ---
+            loaded = window._pdf_viewer.load_pdf(path)
+            self.application.processEvents()
+
+            # --- ASSERT ---
+            self.assertTrue(loaded)
+            self.assertEqual(db.get_config("last_pdf"), path)
+            self.assertTrue(window._status_indicators["file"].property("ready"))
+        finally:
+            if window._pdf_viewer._doc is not None:
+                window._pdf_viewer._doc.close()
+            os.unlink(path)
+            window.close()
+
+    def test_startup_hides_status_bar_but_keeps_four_status_segments(self) -> None:
         """
         Scenario: Status information is consolidated without wasting startup space
         Given: a newly constructed main window
@@ -177,7 +211,7 @@ class INF03UiTests(unittest.TestCase):
         # --- ACT ---
         segment_keys = set(window._status_indicators)
         # --- ASSERT ---
-        self.assertEqual(segment_keys, {"file", "database", "ai"})
+        self.assertEqual(segment_keys, {"file", "answer_key", "database", "ai"})
         self.assertFalse(window.statusBar().isVisible())
         window.close()
 

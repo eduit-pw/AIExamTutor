@@ -9,6 +9,39 @@ and releases use Semantic Versioning.
 
 No changes yet.
 
+## [1.2.1] - 2026-08-20
+
+### Added
+
+- A visible `Send to chat` action in the declarative INF.03 workspace view.
+- Active-tab context forwarding for SQL, PHP, HTML, CSS and JavaScript files.
+- Loaded exam-sheet text in the tutor context so guidance can target the real task.
+- A square multi-resolution Windows application icon for taskbar and shortcut rendering.
+
+### Changed
+
+- The INF.03 Socratic tutor now gives a concrete observation, one actionable next
+    step and a reasoning question instead of repeating generic yes/no prompts.
+- Chat sending uses the visible `Send` button; `Ctrl+Enter` remains documented only
+    for running SQL.
+- Previously selected source-file save paths are reused automatically within an attempt.
+- Local and LM Studio chat requests use bounded generation settings and suppress exposed
+    reasoning content where supported.
+
+### Fixed
+
+- Missing declarative `sendToChatButton` prevented the active-tab chat workflow from
+    being available in the normal application view.
+- Assistant reasoning was no longer shown as the user-facing answer when a provider
+    returned a separate `reasoning_content` field.
+- Windows builds now use square icon entries at standard taskbar sizes.
+
+### Known limitations
+
+- MySQL must be running locally or on the configured network endpoint for SQL execution.
+- AI features require a configured BYOK provider; no API key is bundled.
+- The Windows installer is the supported release artifact.
+
 ## [1.2.0] - 2026-08-17
 
 ### Added
@@ -87,7 +120,8 @@ No changes yet.
 - Light and dark themes.
 - Windows PyInstaller and Inno Setup packaging.
 
-[Unreleased]: https://github.com/eduit-pw/AIExamTutor/compare/v1.2.0...HEAD
+[Unreleased]: https://github.com/eduit-pw/AIExamTutor/compare/v1.2.1...HEAD
+[1.2.1]: https://github.com/eduit-pw/AIExamTutor/releases/tag/v1.2.1
 [1.2.0]: https://github.com/eduit-pw/AIExamTutor/releases/tag/v1.2.0
 [1.1.0]: https://github.com/eduit-pw/AIExamTutor/releases/tag/v1.1.0
 [1.0.0]: https://github.com/eduit-pw/AIExamTutor/releases/tag/v1.0.0

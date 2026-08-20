@@ -10,7 +10,7 @@
 ;   iscc setup_script.iss
 
 #define AppName "AI Exam Tutor"
-#define AppVersion "1.2.0"
+#define AppVersion "1.2.1"
 #define AppPublisher "Pawel"
 #define AppExeName "AI_Exam_Tutor.exe"
 #define AppDirName "AIExamTutor"

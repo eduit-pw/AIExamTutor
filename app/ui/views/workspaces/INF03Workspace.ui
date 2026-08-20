@@ -64,6 +64,7 @@
      <item><spacer name="codeActionsSpacer"><property name="orientation"><enum>Qt::Horizontal</enum></property><property name="sizeHint" stdset="0"><size><width>40</width><height>20</height></size></property></spacer></item>
      <item><widget class="QPushButton" name="saveCodeButton"><property name="text"><string>Save file</string></property><property name="secondaryAction"><bool>true</bool></property></widget></item>
      <item><widget class="QPushButton" name="runBrowserButton"><property name="text"><string>Preview</string></property><property name="toolTip"><string>Preview in browser</string></property><property name="secondaryAction"><bool>true</bool></property></widget></item>
+    <item><widget class="QPushButton" name="sendToChatButton"><property name="text"><string>Send to chat</string></property><property name="secondaryAction"><bool>true</bool></property></widget></item>
      <item><widget class="QPushButton" name="checkTaskButton"><property name="text"><string>Check task</string></property><property name="primaryAction"><bool>true</bool></property></widget></item>
     </layout>
    </item>

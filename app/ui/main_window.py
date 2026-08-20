@@ -10,7 +10,7 @@ import os
 from pathlib import Path
 
 from PySide6.QtCore import Qt, QTimer
-from PySide6.QtGui import QAction, QKeySequence
+from PySide6.QtGui import QAction, QCloseEvent, QKeySequence
 from PySide6.QtUiTools import QUiLoader
 from PySide6.QtWidgets import (
     QApplication,
@@ -51,6 +51,7 @@ class MainWindow(QMainWindow):
         self._pdf_path: str | None = None
         self._answer_key_path: str | None = None
         self._status_indicators: dict[str, QLabel] = {}
+        self._close_retry_scheduled = False
 
         self._load_ui()
         self._build_status_indicators()
@@ -128,6 +129,7 @@ class MainWindow(QMainWindow):
         layout.setContentsMargins(0, 0, 0, 0)
         self._pdf_viewer = PDFViewer()
         self._pdf_viewer.status_changed.connect(self._on_workspace_status)
+        self._pdf_viewer.pdf_loaded.connect(self._on_pdf_loaded)
         self._pdf_viewer.region_snipped.connect(self._on_region_snipped)
         layout.addWidget(self._pdf_viewer)
         # Keep a backwards-compatible reference
@@ -137,6 +139,7 @@ class MainWindow(QMainWindow):
         """Add clear file, database and AI states to the shared status bar."""
         for key, title_source in (
             ("file", "File"),
+            ("answer_key", "Answer key"),
             ("database", "Database"),
             ("ai", "AI"),
         ):
@@ -157,13 +160,17 @@ class MainWindow(QMainWindow):
             "mysql": "database",
             "llm": "ai",
             "pdf": "file",
-            "answer_key": "file",
         }.get(key, key)
         indicator = self._status_indicators.get(key)
         if indicator is not None:
             title = translate(
                 "MainWindow",
-                {"file": "File", "database": "Database", "ai": "AI"}[key],
+                {
+                    "file": "File",
+                    "answer_key": "Answer key",
+                    "database": "Database",
+                    "ai": "AI",
+                }[key],
             )
             state_text = translate("MainWindow", "Connected" if ready else "Offline mode")
             indicator.setText(f"{title}: {state_text}")
@@ -189,6 +196,13 @@ class MainWindow(QMainWindow):
         layout.addWidget(self._chat_panel)
         # Keep a backwards-compatible reference
         self._chat_display = self._chat_panel
+
+    def _send_chat_from_workspace(self, text: str) -> None:
+        """Forward workspace content into the main AI chat input and send it."""
+        if not hasattr(self, "_chat_panel"):
+            return
+        self._chat_panel._input.setPlainText(text)
+        self._chat_panel._send()
 
     def _on_region_snipped(self, png_bytes: bytes) -> None:
         """Send a snipped PDF region to the chat as an image attachment."""
@@ -298,13 +312,17 @@ class MainWindow(QMainWindow):
 
     def _load_pdf(self, path: str) -> None:
         """Load a PDF into the left pane using PyMuPDF (fitz)."""
-        self._pdf_path = path
         if hasattr(self, "_pdf_viewer") and self._pdf_viewer.load_pdf(path):
-            self._db.set_config(cfg.LAST_PDF, path)
-            self.statusBar().showMessage(
-                translate("MainWindow", "PDF loaded: %1").replace("%1", Path(path).name)
-            )
-            self._mark_status_indicator("pdf", translate("MainWindow", "PDF"))
+            return
+
+    def _on_pdf_loaded(self, path: str) -> None:
+        """Persist and display any PDF loaded by menu, restore, or drag-and-drop."""
+        self._pdf_path = path
+        self._db.set_config(cfg.LAST_PDF, path)
+        self.statusBar().showMessage(
+            translate("MainWindow", "PDF loaded: %1").replace("%1", Path(path).name)
+        )
+        self._mark_status_indicator("pdf", translate("MainWindow", "PDF"))
 
     # ------------------------------------------------------------------
     # Workspace switching
@@ -395,6 +413,9 @@ class MainWindow(QMainWindow):
             logger.info("Binding chat panel: attempt_id=%s", self._attempt_id)
             self._chat_panel.set_active_attempt(self._attempt_id)
             self._chat_panel.set_active_workspace(ws)
+        set_chat_callback = getattr(ws, "set_chat_callback", None)
+        if callable(set_chat_callback):
+            set_chat_callback(self._send_chat_from_workspace)
 
         self._update_vision_banner()
         logger.info("Workspace opened successfully: workspace_id=%s", workspace_id)
@@ -455,6 +476,24 @@ class MainWindow(QMainWindow):
 
     def _on_workspace_status(self, message: str) -> None:
         self.statusBar().showMessage(message)
+
+    def closeEvent(self, event: QCloseEvent) -> None:  # noqa: N802
+        """Wait for an active chat request before destroying the Qt widgets."""
+        chat_panel = getattr(self, "_chat_panel", None)
+        if chat_panel is not None and chat_panel.has_running_worker():
+            event.ignore()
+            if not self._close_retry_scheduled:
+                self._close_retry_scheduled = True
+                self.setEnabled(False)
+            QTimer.singleShot(100, self._retry_close)
+            return
+
+        self._close_retry_scheduled = False
+        event.accept()
+
+    def _retry_close(self) -> None:
+        self._close_retry_scheduled = False
+        self.close()
 
     def _toggle_theme(self) -> None:
         """Flip Light/Dark and reapply."""

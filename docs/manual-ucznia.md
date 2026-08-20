@@ -1,7 +1,7 @@
 # AI Exam Tutor - manual ucznia
 
-**Wersja manuala:** 1.2<br>
-**Dotyczy aplikacji:** AI Exam Tutor 1.2.0<br>
+**Wersja manuala:** 1.2.1<br>
+**Dotyczy aplikacji:** AI Exam Tutor 1.2.1<br>
 **Platforma:** Windows
 
 Ten manual opisuje korzystanie z gotowej wersji aplikacji dla ucznia przygotowującego się do egzaminu INF.03. Aplikacja pozwala otworzyć arkusz PDF, pracować nad SQL oraz kodem PHP/HTML, zadawać pytania tutorowi AI i sprawdzić rozwiązanie.
@@ -246,7 +246,7 @@ Kliknij `Testuj`, aby sprawdzić połączenie. Jeżeli test się nie powiedzie, 
 
 1. Wybierz schemat w polu `Schemat`, jeżeli jest dostępny.
 2. Wpisz zapytanie w edytorze SQL.
-3. Kliknij `Uruchom SQL (Ctrl+Enter)` albo naciśnij `Ctrl+Enter`.
+3. Kliknij `Uruchom SQL` albo naciśnij `Ctrl+Enter`.
 4. Obejrzyj wynik w tabeli poniżej edytora.
 
 Po poprawnym wykonaniu aplikacja pokazuje liczbę zwróconych wierszy i czas wykonania. Możesz umieścić w edytorze kilka instrukcji rozdzielonych średnikiem `;`.
@@ -268,6 +268,10 @@ Szkice są automatycznie zapisywane po krótkiej przerwie w pisaniu. Dzięki tem
 
 `Podgląd` zapisuje aktualną treść do katalogu tymczasowego i otwiera plik w domyślnej przeglądarce. Jest to szybki podgląd pliku. Nie zastępuje pełnego serwera PHP i nie uruchamia automatycznie interpretera PHP.
 
+`Wyślij do czatu` przekazuje do panelu AI treść aktualnie wybranej zakładki wraz
+z nazwą pliku. Użyj tej akcji, gdy chcesz omówić konkretnie zapytanie SQL albo
+plik PHP, HTML, CSS lub JavaScript.
+
 ## 7. Rozmowa z AI Tutor
 
 Panel po prawej stronie działa jako `AI Asystent`. W pustym panelu zobaczysz
@@ -277,7 +281,7 @@ masz problem. Asystent ma pomagać w rozumowaniu, a nie od razu podawać komplet
 Aby zadać pytanie:
 
 1. Wpisz pytanie w polu `Zadaj pytanie AI Asystentowi...`.
-2. Kliknij `Wyślij (Ctrl+Enter)` albo naciśnij `Ctrl+Enter`.
+2. Kliknij `Wyślij`.
 3. Poczekaj na odpowiedź.
 
 Do wiadomości tutora może zostać automatycznie dołączony bieżący kontekst środowiska pracy, w tym:
@@ -289,6 +293,9 @@ Do wiadomości tutora może zostać automatycznie dołączony bieżący kontekst
 - kod JavaScript;
 - wybrany schemat;
 - tekst arkusza i klucza odpowiedzi, jeżeli jest dostępny.
+
+Tutor powinien wskazać konkretną obserwację w kodzie, jeden następny krok do
+wykonania i pytanie kontrolne. Nie podaje od razu kompletnego rozwiązania.
 
 Historia rozmowy jest przechowywana dla bieżącej próby. Nie wpisuj do rozmowy haseł, kluczy API ani innych poufnych danych.
 
@@ -348,6 +355,7 @@ Dane są przechowywane w lokalnej bazie SQLite `exam_tutor.db` używanej przez a
 | Wynik oceniania jest pusty lub niepoprawny | Ponów próbę; model musi zwrócić poprawny format odpowiedzi, a połączenie musi działać |
 | Nie ma zapisanych szkiców | Otwórz tę samą próbę i sprawdź, czy aplikacja nie korzysta z innego pliku `exam_tutor.db` |
 | `Uruchom w przeglądarce` nie wykonuje PHP | Funkcja otwiera plik w przeglądarce, ale nie uruchamia serwera PHP; użyj lokalnego serwera, jeżeli zadanie tego wymaga |
+| Brak ikony aplikacji na pasku zadań | Zainstaluj aktualny instalator `AI_Exam_Tutor_Setup.exe`; starsza paczka zawierała niepoprawne proporcje ikony |
 
 ## 11. Krótka checklista przed nauką
 

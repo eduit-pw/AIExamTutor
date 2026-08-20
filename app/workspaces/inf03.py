@@ -282,7 +282,9 @@ class INF03Workspace(BaseWorkspace):
         browser_btn = QPushButton(translate("INF03Workspace", "Preview"))
         browser_btn.setToolTip(translate("INF03Workspace", "Preview in browser"))
         browser_btn.setObjectName("runBrowserButton")
-        for button in (save_code, browser_btn, check_task):
+        send_chat = QPushButton(translate("INF03Workspace", "Send to chat"))
+        send_chat.setObjectName("sendToChatButton")
+        for button in (save_code, browser_btn, send_chat, check_task):
             code_actions.addWidget(button)
         outer.addLayout(code_actions)
 
@@ -384,6 +386,9 @@ class INF03Workspace(BaseWorkspace):
             self._check_button = widget.findChild(QPushButton, "checkTaskButton")
             if self._check_button is not None:
                 self._check_button.clicked.connect(self._check_task)
+            send_chat_button = widget.findChild(QPushButton, "sendToChatButton")
+            if send_chat_button is not None:
+                send_chat_button.clicked.connect(self._send_active_tab_to_chat)
         connection_toggle = widget.findChild(QToolButton, "connectionSettingsToggle")
         connection_panel = widget.findChild(QWidget, "connectionSettingsPanel")
         if connection_toggle is not None and connection_panel is not None:
@@ -610,6 +615,35 @@ class INF03Workspace(BaseWorkspace):
             )
         )
 
+    def _resolve_save_path(
+        self,
+        file_name: str,
+        file_filter: str | None = None,
+        default_name: str | None = None,
+    ) -> str:
+        """Return the saved path for this file in the current attempt/session.
+
+        The first time a file is saved for an attempt, the user is prompted. The
+        chosen path is persisted and reused automatically for the remainder of the
+        session without re-opening the file picker.
+        """
+        saved_path = self.db.get_config(cfg.code_file_key(self.attempt_id, file_name), "")
+        if saved_path:
+            return saved_path
+
+        start_path = default_name or file_name or ""
+        folder = str(Path(start_path).resolve().parent) if Path(start_path).parent else ""
+        chosen, _ = QFileDialog.getSaveFileName(
+            self._root,
+            f"Save {file_name}",
+            saved_path or folder or file_name,
+            f"{file_filter};;All files (*)" if file_filter else "All files (*)",
+        )
+        if not chosen:
+            return ""
+        self.db.set_config(cfg.code_file_key(self.attempt_id, file_name), chosen)
+        return chosen
+
     def _save_current_file(self) -> None:
         """Save the selected PHP, HTML, CSS, or JavaScript tab to its file."""
         if self._code_tabs is None:
@@ -627,20 +661,42 @@ class INF03Workspace(BaseWorkspace):
         editor, file_name, file_filter = files[file_index]
         if editor is None:
             return
-        saved_path = (
-            self.db.get_config(cfg.code_file_key(self.attempt_id, file_name), "") or file_name
-        )
-        path, _ = QFileDialog.getSaveFileName(
-            self._root,
-            f"Save {file_name}",
-            saved_path,
-            f"{file_filter};;All files (*)",
-        )
+
+        path = self._resolve_save_path(file_name, file_filter, file_name)
         if not path:
             return
+
         Path(path).write_text(editor.toPlainText(), encoding="utf-8")
-        self.db.set_config(cfg.code_file_key(self.attempt_id, file_name), path)
         self._set_status(translate("INF03Workspace", "Saved %1.").replace("%1", Path(path).name))
+
+    def _send_active_tab_to_chat(self) -> None:
+        """Forward the currently selected tab's source into the AI chat panel."""
+        tab_name, content = self._active_tab_snapshot()
+        if not content.strip():
+            self._set_status(translate("INF03Workspace", "Current tab is empty."))
+            return
+        payload = f"[Selected file: {tab_name}]\n\n{content[:20000]}"
+        self.send_to_chat(payload)
+        self._set_status(translate("INF03Workspace", "Sent %1 to chat.").replace("%1", tab_name))
+
+    def _active_tab_snapshot(self) -> tuple[str, str]:
+        """Return the active file / SQL tab and the current text body."""
+        if self._code_tabs is None:
+            return ("workspace", self._current_sql())
+        index = self._code_tabs.currentIndex()
+        if index == 0:
+            return ("query.sql", self._current_sql())
+        files = (
+            ("index.php", self._current_php()),
+            ("index.html", self._current_html()),
+            ("style.css", self._current_css()),
+            ("script.js", self._current_javascript()),
+        )
+        file_index = index - 1
+        if 0 <= file_index < len(files):
+            name, content = files[file_index]
+            return (name, content)
+        return ("workspace", self._current_sql())
 
     def _set_status(self, text: str) -> None:
         if self._status is not None:

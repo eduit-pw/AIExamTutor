@@ -79,7 +79,7 @@
     <message><source>About AI Exam Tutor</source><translation>O aplikacji AI Exam Tutor</translation></message>
     <message><source>Close</source><translation>Zamknij</translation></message>
     <message><source>&lt;b&gt;Support the project&lt;/b&gt;&lt;br/&gt;If the app helps you learn, you can support its development.</source><translation>&lt;b&gt;Wesprzyj projekt&lt;/b&gt;&lt;br/&gt;Jeśli aplikacja pomaga Ci w nauce, możesz wesprzeć jej rozwój.</translation></message>
-    <message><source>&lt;b&gt;AI Exam Tutor&lt;/b&gt;&lt;br/&gt;Version 1.2.0</source><translation>&lt;b&gt;AI Exam Tutor&lt;/b&gt;&lt;br/&gt;Wersja 1.2.0</translation></message>
+    <message><source>&lt;b&gt;AI Exam Tutor&lt;/b&gt;&lt;br/&gt;Version %1</source><translation>&lt;b&gt;AI Exam Tutor&lt;/b&gt;&lt;br/&gt;Wersja %1</translation></message>
 </context>
 <context>
     <name>SettingsDialog</name>
@@ -92,6 +92,8 @@
     <message><source>Save</source><translation>Zapisz</translation></message>
     <message><source>Cancel</source><translation>Anuluj</translation></message>
     <message><source>Test connection</source><translation>Testuj połączenie</translation></message>
+    <message><source>Fetch available models</source><translation>Pobierz dostępne modele</translation></message>
+    <message><source>Fetching...</source><translation>Pobieranie...</translation></message>
     <message><source>Testing...</source><translation>Testowanie...</translation></message>
     <message><source>Connection successful</source><translation>Połączenie działa</translation></message>
     <message><source>The API responded successfully.</source><translation>API odpowiedziało poprawnie.</translation></message>
@@ -102,6 +104,11 @@
     <message><source>Custom OpenAI-compatible</source><translation>Własny zgodny z OpenAI</translation></message>
     <message><source>Incomplete settings</source><translation>Niepełne ustawienia</translation></message>
     <message><source>Select a model and provide a base URL for a custom provider.</source><translation>Wybierz model i podaj adres bazowy dla własnego providera.</translation></message>
+    <message><source>Provide a base URL before fetching models.</source><translation>Podaj adres bazowy przed pobraniem modeli.</translation></message>
+    <message><source>No models found</source><translation>Nie znaleziono modeli</translation></message>
+    <message><source>The provider returned no available models.</source><translation>Dostawca nie zwrócił dostępnych modeli.</translation></message>
+    <message><source>Model fetch failed</source><translation>Nie udało się pobrać modeli</translation></message>
+    <message><source>The provider did not return models: %1</source><translation>Dostawca nie zwrócił modeli: %1</translation></message>
     <message><source>Language changed</source><translation>Zmieniono język</translation></message>
     <message><source>Restart the application to apply the new language.</source><translation>Uruchom ponownie aplikację, aby zastosować nowy język.</translation></message>
 </context>
@@ -145,6 +152,9 @@
     <message><source>Save file</source><translation>Zapisz plik</translation></message>
     <message><source>Preview</source><translation>Podgląd</translation></message>
     <message><source>Preview in browser</source><translation>Podgląd w przeglądarce</translation></message>
+    <message><source>Send to chat</source><translation>Wyślij do czatu</translation></message>
+    <message><source>Current tab is empty.</source><translation>Bieżąca zakładka jest pusta.</translation></message>
+    <message><source>Sent %1 to chat.</source><translation>Wysłano %1 do czatu.</translation></message>
     <message><source>Select a source file first.</source><translation>Najpierw wybierz plik źródłowy.</translation></message>
     <message><source>Ready.</source><translation>Gotowe.</translation></message>
     <message><source>Checking...</source><translation>Sprawdzanie...</translation></message>
@@ -172,7 +182,7 @@
     <message><source>Ask the AI Tutor...</source><translation>Zadaj pytanie AI Tutorowi...</translation></message>
     <message><source>Ask the AI Assistant...</source><translation>Zadaj pytanie AI Asystentowi...</translation></message>
     <message><source>Ask about the exam sheet or paste code you need help with.</source><translation>Zapytaj o arkusz egzaminacyjny albo wklej kod, z którym masz problem.</translation></message>
-    <message><source>Send (Ctrl+Enter)</source><translation>Wyślij (Ctrl+Enter)</translation></message>
+    <message><source>Send</source><translation>Wyślij</translation></message>
     <message><source>Thinking...</source><translation>Myślę...</translation></message>
     <message><source>📎 %1 image(s) attached — click Send</source><translation>📎 Załączono obrazów: %1 — kliknij Wyślij</translation></message>
 </context>
