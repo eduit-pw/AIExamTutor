@@ -271,7 +271,11 @@ class MainWindow(QMainWindow):
 
     def _set_file_actions_enabled(self, enabled: bool) -> None:
         """Allow PDF / answer-key actions only once an exam is active."""
-        for action in (getattr(self, "_open_pdf_action", None), getattr(self, "_answer_key_action", None)):
+        actions = (
+            getattr(self, "_open_pdf_action", None),
+            getattr(self, "_answer_key_action", None),
+        )
+        for action in actions:
             if action is not None:
                 action.setEnabled(enabled)
 

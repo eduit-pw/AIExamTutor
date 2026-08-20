@@ -6,7 +6,6 @@ import unittest
 from unittest.mock import MagicMock, patch
 
 import mysql.connector
-
 from PySide6.QtWidgets import (
     QApplication,
     QPlainTextEdit,

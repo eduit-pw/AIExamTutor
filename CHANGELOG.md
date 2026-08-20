@@ -25,10 +25,13 @@ No changes yet.
   the catalog and the UI at the same time.
 - Stabilized the startup category card geometry so the exam-selector layout remains
   aligned in both headless CI and live Qt sessions.
+- Fixed `ruff` lint violations (`E501` and `I001`) in the main window and UI test
+  imports so the CI lint step stays green.
 
 ### Changed
 
-- Release and documentation version numbers were aligned to `1.2.2`.
+- Release and documentation were aligned to the final `1.2.2` state and reflect the
+  validated CI-safe build.
 
 ## [1.2.1] - 2026-08-20
 
