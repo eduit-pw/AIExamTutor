@@ -3,7 +3,9 @@
 import os
 import tempfile
 import unittest
-from unittest.mock import patch
+from unittest.mock import MagicMock, patch
+
+import mysql.connector
 
 from PySide6.QtWidgets import (
     QApplication,
@@ -126,6 +128,90 @@ class INF03UiTests(unittest.TestCase):
         self.assertGreaterEqual(panel._input.minimumWidth(), 180)
         self.assertEqual(panel._send_btn.sizePolicy().horizontalPolicy().name, "Expanding")
         panel.close()
+
+    def test_sql_errors_are_logged_without_traceback(self) -> None:
+        """
+        Scenario: a missing local MySQL server does not spam the log with stack traces
+        Given: an INF.03 workspace with an SQL query ready to run
+        When: the query hits a MySQL connection failure
+        Then: the issue is reported as a quiet status warning rather than a traceback
+        """
+        # --- ARRANGE ---
+        workspace, _root, _db = self._build_workspace()
+        workspace._sql_editor.setPlainText("SELECT 1;")
+        error = mysql.connector.errors.InterfaceError("2003: Can't connect to MySQL server")
+
+        # --- ACT ---
+        with (
+            patch.object(workspace, "_execute_mysql", side_effect=error),
+            patch("app.workspaces.inf03.logger.warning") as warning,
+            patch("app.workspaces.inf03.logger.exception") as exception,
+        ):
+            workspace._run_sql()
+
+        # --- ASSERT ---
+        self.assertFalse(exception.called)
+        self.assertTrue(warning.called)
+        self.assertIn("MySQL", str(warning.call_args[0][0]))
+        workspace.deactivate()
+
+    def test_chat_send_marks_ai_status_connected(self) -> None:
+        """
+        Scenario: sending a prompt to the AI indicates the tutor is connected
+        Given: a main window with an active attempt and chat panel
+        When: the student submits a message
+        Then: the bottom AI status indicator is marked as ready
+        """
+        # --- ARRANGE ---
+        db = DBManager(":memory:")
+        window = MainWindow(db, ThemeManager(db))
+        attempt_id = db.create_attempt("inf03")
+        window._chat_panel.set_active_attempt(attempt_id)
+        window._chat_panel._input.setPlainText("Hello")
+
+        # --- ACT ---
+        with (
+            patch.object(
+                window._chat_panel._llm,
+                "connection_settings",
+                return_value={
+                    "provider": "openai",
+                    "model": "gpt-4o-mini",
+                    "api_key": "",
+                    "base_url": "https://api.openai.com/v1",
+                },
+            ),
+            patch("app.ui.chat_panel._ChatWorker", return_value=MagicMock()) as worker_factory,
+        ):
+            worker = worker_factory.return_value
+            worker.finished_ok = MagicMock()
+            worker.finished_err = MagicMock()
+            worker.finished = MagicMock()
+            worker.isRunning.return_value = False
+            window._chat_panel._send()
+
+        # --- ASSERT ---
+        self.assertTrue(window._status_indicators["ai"].property("ready"))
+        window.close()
+
+    def test_startup_screen_disables_pdf_actions(self) -> None:
+        """
+        Scenario: the selection screen does not allow loading exam artifacts yet
+        Given: a newly created main window on the startup screen
+        When: the selector is visible
+        Then: PDF and answer-key actions are disabled
+        """
+        # --- ARRANGE ---
+        db = DBManager(":memory:")
+        window = MainWindow(db, ThemeManager(db))
+
+        # --- ACT ---
+        window._show_startup_screen()
+
+        # --- ASSERT ---
+        self.assertFalse(window._open_pdf_action.isEnabled())
+        self.assertFalse(window._answer_key_action.isEnabled())
+        window.close()
 
     def test_pdf_toolbar_is_compact_and_polish_empty_state_is_used(self) -> None:
         """

@@ -6,7 +6,7 @@ from importlib import resources
 
 from PySide6.QtCore import Signal
 from PySide6.QtUiTools import QUiLoader
-from PySide6.QtWidgets import QMenu, QPushButton, QWidget
+from PySide6.QtWidgets import QFrame, QMenu, QPushButton, QSizePolicy, QWidget
 
 from app.core.exam_catalog import EXAM_ENTRIES, ExamEntry
 from app.core.localization import translate
@@ -30,6 +30,11 @@ class StartupScreen(QWidget):
             root = loader.load(str(ui_path), self)
         if root is None:
             raise RuntimeError("QUiLoader returned None for StartupScreen.ui")
+        for card_name in ("e8Card", "maturaCard", "vocationalCard"):
+            card = root.findChild(QFrame, card_name)
+            if card is not None:
+                card.setFixedHeight(440)
+                card.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Fixed)
         layout = self.layout()
         if layout is None:
             from PySide6.QtWidgets import QVBoxLayout

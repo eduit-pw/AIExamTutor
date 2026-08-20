@@ -173,6 +173,15 @@ class ChatPanel(QWidget):
             self._append_message("system", "No active attempt. Open a workspace first.")
             return
 
+        settings = self._llm.connection_settings()
+        if settings.get("provider") and settings.get("model") and settings.get("base_url"):
+            window = self.window()
+            if window is not None and hasattr(window, "_mark_status_indicator"):
+                window._mark_status_indicator("ai", translate("MainWindow", "AI"))
+                window.statusBar().showMessage(
+                    translate("MainWindow", "AI connection ready")
+                )
+
         attempt_id = self._active_attempt_id
 
         # Save user message

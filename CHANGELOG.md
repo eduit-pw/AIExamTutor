@@ -9,6 +9,27 @@ and releases use Semantic Versioning.
 
 No changes yet.
 
+## [1.2.2] - 2026-08-20
+
+### Fixed
+
+- Quieted noisy MySQL connection failures in the INF.03 workspace so local missing
+  database services do not flood the log with stack traces.
+- The AI status indicator is now updated when the student sends a message, so the
+  bottom status bar reflects the real connection state for the chat session.
+- The startup exam selector now disables PDF and answer-key actions until an actual
+  workspace is opened.
+- Fixed the GitHub Actions CI startup failure by forcing the headless Qt platform and
+  installing the missing XCB cursor dependencies needed by PySide6 in Linux CI.
+- Removed the startup-screen import cycle that could appear when the app bootstrapped
+  the catalog and the UI at the same time.
+- Stabilized the startup category card geometry so the exam-selector layout remains
+  aligned in both headless CI and live Qt sessions.
+
+### Changed
+
+- Release and documentation version numbers were aligned to `1.2.2`.
+
 ## [1.2.1] - 2026-08-20
 
 ### Added
@@ -120,7 +141,8 @@ No changes yet.
 - Light and dark themes.
 - Windows PyInstaller and Inno Setup packaging.
 
-[Unreleased]: https://github.com/eduit-pw/AIExamTutor/compare/v1.2.1...HEAD
+[Unreleased]: https://github.com/eduit-pw/AIExamTutor/compare/v1.2.2...HEAD
+[1.2.2]: https://github.com/eduit-pw/AIExamTutor/releases/tag/v1.2.2
 [1.2.1]: https://github.com/eduit-pw/AIExamTutor/releases/tag/v1.2.1
 [1.2.0]: https://github.com/eduit-pw/AIExamTutor/releases/tag/v1.2.0
 [1.1.0]: https://github.com/eduit-pw/AIExamTutor/releases/tag/v1.1.0

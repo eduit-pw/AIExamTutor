@@ -223,10 +223,14 @@ class MainWindow(QMainWindow):
         open_act = QAction(translate("MainWindow", "Open PDF"), self)
         open_act.setShortcut(QKeySequence("Ctrl+O"))
         open_act.triggered.connect(self._open_pdf)
+        open_act.setEnabled(False)
+        self._open_pdf_action = open_act
         file_menu.addAction(open_act)
 
         answer_key_act = QAction(translate("MainWindow", "Open answer key PDF"), self)
         answer_key_act.triggered.connect(self._open_answer_key_pdf)
+        answer_key_act.setEnabled(False)
+        self._answer_key_action = answer_key_act
         file_menu.addAction(answer_key_act)
 
         # Settings (Ctrl+,)
@@ -265,8 +269,15 @@ class MainWindow(QMainWindow):
             )
         self._show_startup_screen()
 
+    def _set_file_actions_enabled(self, enabled: bool) -> None:
+        """Allow PDF / answer-key actions only once an exam is active."""
+        for action in (getattr(self, "_open_pdf_action", None), getattr(self, "_answer_key_action", None)):
+            if action is not None:
+                action.setEnabled(enabled)
+
     def _show_startup_screen(self) -> None:
         """Show the exam selector without creating an attempt."""
+        self._set_file_actions_enabled(False)
         self._clear_active_workspace()
         self._attempt_id = None
         self._left_pane.setVisible(False)
@@ -384,6 +395,7 @@ class MainWindow(QMainWindow):
             return
 
         self._attempt_id = attempt_id
+        self._set_file_actions_enabled(True)
         self.statusBar().setVisible(True)
         self._left_pane.setVisible(True)
         self._right_pane.setVisible(True)

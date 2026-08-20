@@ -446,7 +446,7 @@ class INF03Workspace(BaseWorkspace):
         try:
             rows, columns = self._execute_mysql(schema, query)
         except Exception as exc:  # noqa: BLE001 — surface as status text
-            logger.exception("SQL execution failed")
+            logger.warning("MySQL query failed: %s", exc)
             self._set_status(
                 translate("INF03Workspace", "MySQL error: %1").replace("%1", str(exc))
             )
