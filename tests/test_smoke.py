@@ -4,11 +4,16 @@ Full AAA + Gherkin suite is task #6. This is just a placeholder that exercises
 the scaffold imports and DBManager on :memory:.
 """
 
+import json
 import struct
 import unittest
 from pathlib import Path
+from unittest.mock import MagicMock, patch
+
+from PySide6.QtWidgets import QApplication
 
 from app.core.config import is_vision_capable
+from app.core.version_check import fetch_latest_release_version, is_newer_version
 from app.database.db_manager import DBManager
 from app.workspaces.factory import WorkspaceFactory
 from app.workspaces.inf03 import INF03Workspace
@@ -41,6 +46,50 @@ class SmokeTests(unittest.TestCase):
             WorkspaceFactory.display_name_for("inf03"),
             "INF.03 — SQL & PHP/HTML/CSS/JavaScript",
         )
+
+    def test_main_window_uses_application_icon_from_resources(self) -> None:
+        """
+        Scenario: the taskbar icon uses the branded application icon
+        Given: a MainWindow instance created by the app
+        When: the window icon is inspected
+        Then: it comes from the packaged eduit-favicon.ico resource
+        """
+        # --- ARRANGE ---
+        QApplication.instance() or QApplication([])
+        from app.core.theme_manager import ThemeManager
+        from app.database.db_manager import DBManager
+        from app.ui.main_window import MainWindow
+
+        db = DBManager(":memory:")
+        theme = ThemeManager(db)
+        # --- ACT ---
+        window = MainWindow(db, theme)
+
+        # --- ASSERT ---
+        self.assertFalse(window.windowIcon().isNull())
+        self.assertTrue(window.windowIcon().availableSizes())
+        self.assertFalse(window.windowIcon().pixmap(64, 64).isNull())
+        window.close()
+
+    def test_update_checker_reads_github_latest_release(self) -> None:
+        """
+        Scenario: the app checks the GitHub latest release on startup
+        Given: a GitHub response with tag_name=v1.3.0
+        When: the release metadata is fetched
+        Then: the app can detect that the local version is outdated
+        """
+        # --- ARRANGE ---
+        response = MagicMock()
+        response.__enter__.return_value = response
+        response.read.return_value = json.dumps({"tag_name": "v1.3.0"}).encode("utf-8")
+
+        # --- ACT ---
+        with patch("app.core.version_check.urlopen", return_value=response):
+            latest = fetch_latest_release_version()
+
+        # --- ASSERT ---
+        self.assertEqual(latest, "v1.3.0")
+        self.assertTrue(is_newer_version("1.2.2", latest))
 
     def test_inf03_workspace_instantiates(self) -> None:
         """INF03Workspace constructor runs without Qt widget build."""

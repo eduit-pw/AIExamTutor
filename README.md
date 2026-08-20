@@ -35,7 +35,7 @@ See `docs/adr/` for the project's published architectural decisions.
 
 ## Releases
 
-Current stable release: `v1.2.2`.
+Current stable release: `v1.2.3`.
 
 Every published version must have a dated entry in the
 [CHANGELOG](CHANGELOG.md). Release tags use the `vX.Y.Z` format and the

@@ -17,6 +17,7 @@ from app import __version__
 from app.core.localization import LanguageManager
 from app.core.logger import configure_logging, get_logger
 from app.core.theme_manager import ThemeManager
+from app.core.version_check import fetch_latest_release_version, is_newer_version
 from app.database.db_manager import DBManager
 from app.ui.main_window import MainWindow
 
@@ -31,11 +32,20 @@ def main() -> int:
     configure_logging()
     logger.info("AI Exam Tutor v%s starting", __version__)
 
+    latest_release = fetch_latest_release_version()
+    if is_newer_version(__version__, latest_release):
+        logger.warning(
+            "A newer version is available on GitHub: %s (current: %s)",
+            latest_release,
+            __version__,
+        )
+
     app = QApplication(sys.argv)
     app.setApplicationName("AI Exam Tutor")
     app.setOrganizationName("EDUIT")
     with resources.as_file(resources.files("resources").joinpath("eduit-favicon.ico")) as icon_path:
-        app.setWindowIcon(QIcon(str(icon_path)))
+        app_icon = QIcon(str(icon_path))
+        app.setWindowIcon(app_icon)
 
     db = DBManager("exam_tutor.db")
     language = LanguageManager(db)
@@ -44,6 +54,7 @@ def main() -> int:
     theme.apply(app)
 
     window = MainWindow(db, theme)
+    window.setWindowIcon(app.windowIcon())
     window.show()
 
     logger.info("Entering Qt event loop")

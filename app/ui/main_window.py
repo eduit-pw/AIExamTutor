@@ -7,10 +7,11 @@ All other logic lives in the workspace classes and core modules.
 from __future__ import annotations
 
 import os
+from importlib import resources
 from pathlib import Path
 
 from PySide6.QtCore import Qt, QTimer
-from PySide6.QtGui import QAction, QCloseEvent, QKeySequence
+from PySide6.QtGui import QAction, QCloseEvent, QIcon, QKeySequence
 from PySide6.QtUiTools import QUiLoader
 from PySide6.QtWidgets import (
     QApplication,
@@ -42,6 +43,12 @@ class MainWindow(QMainWindow):
 
     def __init__(self, db: DBManager, theme: ThemeManager) -> None:
         super().__init__()
+        try:
+            ico_path = resources.files("resources").joinpath("eduit-favicon.ico")
+            with resources.as_file(ico_path) as icon_path:
+                self.setWindowIcon(QIcon(str(icon_path)))
+        except (FileNotFoundError, ModuleNotFoundError):
+            pass
         self._db = db
         self._theme = theme
         self._llm = LLMClient(db)

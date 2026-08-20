@@ -7,7 +7,24 @@ and releases use Semantic Versioning.
 
 ## [Unreleased]
 
-No changes yet.
+### Added
+
+- Startup version check against the latest GitHub Release tag, with a non-blocking warning when a newer release is available.
+
+### Fixed
+
+- The main window now uses the branded `eduit-favicon.ico` as its real window icon so Windows taskbar/start shortcuts use the correct app icon.
+
+## [1.2.3] - 2026-08-21
+
+### Fixed
+
+- Windows taskbar and shortcut icon now reliably uses the packaged `eduit-favicon.ico` instead of the default Qt fallback.
+- Startup now checks the latest GitHub Release tag and warns when a newer version is available without blocking the app from launching.
+
+### Changed
+
+- Release metadata and project docs were aligned to the `1.2.3` release state.
 
 ## [1.2.2] - 2026-08-20
 
@@ -144,7 +161,8 @@ No changes yet.
 - Light and dark themes.
 - Windows PyInstaller and Inno Setup packaging.
 
-[Unreleased]: https://github.com/eduit-pw/AIExamTutor/compare/v1.2.2...HEAD
+[Unreleased]: https://github.com/eduit-pw/AIExamTutor/compare/v1.2.3...HEAD
+[1.2.3]: https://github.com/eduit-pw/AIExamTutor/releases/tag/v1.2.3
 [1.2.2]: https://github.com/eduit-pw/AIExamTutor/releases/tag/v1.2.2
 [1.2.1]: https://github.com/eduit-pw/AIExamTutor/releases/tag/v1.2.1
 [1.2.0]: https://github.com/eduit-pw/AIExamTutor/releases/tag/v1.2.0
